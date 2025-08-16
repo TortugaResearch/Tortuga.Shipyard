@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0</TargetFrameworks>
+		<Authors>Jonathan Allen</Authors>
+		<Company>Tortuga Research</Company>
+		<Description>Library for assisting in code generation tasks.</Description>
+		<PackageTags>Database,SQL</PackageTags>
+		<LangVersion>13.0</LangVersion>
+		<Deterministic>true</Deterministic>
+		<ImplicitUsings>true</ImplicitUsings>
+		<ProductName>Tortuga Shipyard</ProductName>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AnalysisLevel>latest</AnalysisLevel>
+
+
+		<Version>0.1</Version>
+
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+		<Copyright>Jonathan Allen 2025</Copyright>
+
+		<PackageProjectUrl>https://github.com/TortugaResearch/Tortuga.Anchor</PackageProjectUrl>
+
+		<RepositoryUrl>https://github.com/TortugaResearch/Tortuga.Anchor.git</RepositoryUrl>
+
+		<RepositoryType>git</RepositoryType>
+		<Nullable>enable</Nullable>
+
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<DocumentationFile>Tortuga.Anchor.xml</DocumentationFile>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="System.Collections.Immutable" Version="9.0.4" />
+		<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+		<PackageReference Include="Tortuga.Anchor" Version="5.0.1" />
+	</ItemGroup>
+
+	<!-- NuGet Packaging Boilerplate-->
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+</Project>
