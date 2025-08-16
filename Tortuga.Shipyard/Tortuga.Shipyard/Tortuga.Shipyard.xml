@@ -369,26 +369,14 @@
             </summary>
             <seealso cref="T:Tortuga.Shipyard.Generator" />
         </member>
-        <member name="M:Tortuga.Shipyard.SqlServerGenerator.#ctor">
-            <summary>
-            Initializes a new instance of the <see cref="T:Tortuga.Shipyard.SqlServerGenerator"/> class.
-            </summary>
-        </member>
         <member name="F:Tortuga.Shipyard.SqlServerGenerator.s_KeyWords">
             <summary>
             The s key words
             </summary>
         </member>
-        <member name="M:Tortuga.Shipyard.SqlServerGenerator.EscapeIdentifier(System.String)">
+        <member name="M:Tortuga.Shipyard.SqlServerGenerator.#ctor">
             <summary>
-            Escapes the identifier.
-            </summary>
-            <param name="identifier">The identifier.</param>
-            <returns>System.Nullable&lt;System.String&gt;.</returns>
-        </member>
-        <member name="P:Tortuga.Shipyard.SqlServerGenerator.UseBatchSeperator">
-            <summary>
-            Gets or sets a value indicating whether batch seperator should be used between statements.
+            Initializes a new instance of the <see cref="T:Tortuga.Shipyard.SqlServerGenerator"/> class.
             </summary>
         </member>
         <member name="P:Tortuga.Shipyard.SqlServerGenerator.IncludeSchemaNameInConstraintNames">
@@ -396,12 +384,10 @@
             Gets or sets a value indicating whether to include schema name when generating a constraint name.
             </summary>
         </member>
-        <member name="M:Tortuga.Shipyard.SqlServerGenerator.NameConstraints(Tortuga.Shipyard.Table)">
+        <member name="P:Tortuga.Shipyard.SqlServerGenerator.UseBatchSeperator">
             <summary>
-            Names the constraints.
+            Gets or sets a value indicating whether batch seperator should be used between statements.
             </summary>
-            <param name="table">The table.</param>
-            <exception cref="T:System.ArgumentNullException">table</exception>
         </member>
         <member name="M:Tortuga.Shipyard.SqlServerGenerator.BuildTable(Tortuga.Shipyard.Table)">
             <summary>
@@ -411,6 +397,13 @@
             <returns>System.String.</returns>
             <exception cref="T:System.ArgumentNullException">table</exception>
         </member>
+        <member name="M:Tortuga.Shipyard.SqlServerGenerator.NameConstraints(Tortuga.Shipyard.Table)">
+            <summary>
+            Names the constraints.
+            </summary>
+            <param name="table">The table.</param>
+            <exception cref="T:System.ArgumentNullException">table</exception>
+        </member>
         <member name="M:Tortuga.Shipyard.SqlServerGenerator.ValidateTable(Tortuga.Shipyard.Table)">
             <summary>
             Validates the table.
@@ -418,6 +411,13 @@
             <param name="table">The table.</param>
             <returns>List&lt;ValidationResult&gt;.</returns>
             <exception cref="T:System.ArgumentNullException">table</exception>
+        </member>
+        <member name="M:Tortuga.Shipyard.SqlServerGenerator.EscapeIdentifier(System.String)">
+            <summary>
+            Escapes the identifier.
+            </summary>
+            <param name="identifier">The identifier.</param>
+            <returns>System.Nullable&lt;System.String&gt;.</returns>
         </member>
         <member name="T:Tortuga.Shipyard.Table">
             <summary>

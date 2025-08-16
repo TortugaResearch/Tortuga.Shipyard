@@ -21,15 +21,15 @@
 
 		<Copyright>Jonathan Allen 2025</Copyright>
 
-		<PackageProjectUrl>https://github.com/TortugaResearch/Tortuga.Anchor</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/TortugaResearch/Tortuga.Shipyard</PackageProjectUrl>
 
-		<RepositoryUrl>https://github.com/TortugaResearch/Tortuga.Anchor.git</RepositoryUrl>
+		<RepositoryUrl>https://github.com/TortugaResearch/Tortuga.Shipyard.git</RepositoryUrl>
 
 		<RepositoryType>git</RepositoryType>
 		<Nullable>enable</Nullable>
 
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<DocumentationFile>Tortuga.Anchor.xml</DocumentationFile>
+		<DocumentationFile>Tortuga.Shipyard.xml</DocumentationFile>
 	</PropertyGroup>
 
 
