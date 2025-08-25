@@ -1,4 +1,5 @@
-﻿using Tortuga.Anchor.Modeling;
+﻿using System.ComponentModel.DataAnnotations;
+using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
 
@@ -27,6 +28,7 @@ public class Table : ModelBase
 	/// Gets the collection of columns in the table.
 	/// </summary>
 	/// <value>The columns.</value>
+	[Length(minimumLength: 1, maximumLength: int.MaxValue)]
 	public ColumnCollection Columns => GetNew<ColumnCollection>();
 
 	/// <summary>
@@ -56,28 +58,36 @@ public class Table : ModelBase
 	/// Gets or sets the schema name of the table.
 	/// </summary>
 	/// <value>The name of the schema.</value>
-	public string? SchemaName { get => Get<string?>(); set => Set(value); }
+	public string SchemaName { get => Get<string>(); set => Set(value); }
 
 	/// <summary>
 	/// Gets or sets the table name.
 	/// </summary>
 	/// <value>The name of the table.</value>
-	public string? TableName { get => Get<string?>(); set => Set(value); }
+	public string TableName { get => Get<string>(); set => Set(value); }
 
-	///// <summary>
-	///// Adds a clustered index.
-	///// </summary>
-	///// <param name="columnNames">The column names.</param>
-	///// <returns>The newly created index.</returns>
-	//public Index AddClusteredIndex(params string[] columnNames)
-	//{
-	//	if (columnNames == null)
-	//		throw new ArgumentNullException(nameof(columnNames), $"{nameof(columnNames)} is null.");
+	/// <summary>
+	/// Creates a view.
+	/// </summary>
+	/// <param name="schemaName">Name of the schema for the new view.</param>
+	/// <param name="viewName">Name of the view.</param>
+	/// <param name="columnNames">The columns to include. If null/empty, all columns will be used.</param>
+	public View CreateView(string schemaName, string viewName, params string[]? columnNames)
+	{
+		var result = new View(schemaName, viewName);
+		var source = new ViewSource(SchemaName, TableName);
+		if (columnNames == null || columnNames.Length == 0)
+		{
+			foreach (var column in Columns)
+				source.AddColumn(column.ColumnName);
+		}
+		else
+		{
+			foreach (var column in columnNames)
+				source.AddColumn(column);
+		}
+		result.Sources.Add(source);
 
-	//	var result = new Index();
-	//	foreach (var column in columnNames)
-	//		result.OrderedColumns.Add(Columns.Single(c => c.ColumnName == column));
-
-	//	return result;
-	//}
+		return result;
+	}
 }

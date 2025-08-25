@@ -9,7 +9,16 @@ namespace ShipyardTests;
 public sealed class SqlServerTableTests
 {
 	[TestMethod]
-	public void TestMethod1()
+	public void No_Columns_Test()
+	{
+		var table = new Table("dbo", "foo");
+		var generator = new SqlServerGenerator();
+		var results = generator.ValidateTable(table);
+		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "Columns")));
+	}
+
+	[TestMethod]
+	public void Scenario_1()
 	{
 		var expected = @"CREATE TABLE Denormalized.Address
 (
@@ -123,7 +132,7 @@ GO
 	}
 
 	[TestMethod]
-	public void TestMethod2()
+	public void Scenario_2()
 	{
 		var expected = @"CREATE TABLE Imports.NameAddresses
 (
@@ -197,7 +206,7 @@ GO
 	}
 
 	[TestMethod]
-	public void TestMethod3()
+	public void Scenario_3()
 	{
 		var expected = @"CREATE TABLE Storage.NameAddresses
 (

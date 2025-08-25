@@ -1,4 +1,5 @@
-﻿using Tortuga.Anchor.Modeling;
+﻿using System.ComponentModel.DataAnnotations;
+using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
 
@@ -19,6 +20,7 @@ public class Index : ModelBase
 	/// Gets or sets the name of the index.
 	/// </summary>
 	/// <value>The name of the index.</value>
+	[Required]
 	public string? IndexName { get => Get<string?>(); set => Set(value); }
 
 	/// <summary>
@@ -35,5 +37,6 @@ public class Index : ModelBase
 	/// Gets the ordered columns.
 	/// </summary>
 	/// <value>The ordered columns.</value>
+	[Length(minimumLength: 1, maximumLength: int.MaxValue)]
 	public List<string> OrderedColumns => GetNew<List<string>>();
 }

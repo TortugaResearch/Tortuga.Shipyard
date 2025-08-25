@@ -231,6 +231,12 @@ public class SqlServerGenerator : Generator
 			result.AddRange(column.GetAllErrors());
 		}
 
+		if (table.ClusteredIndex != null)
+		{
+			table.ClusteredIndex.Validate();
+			result.AddRange(table.GetAllErrors());
+		}
+
 		foreach (var index in table.Indexes)
 		{
 			index.Validate();

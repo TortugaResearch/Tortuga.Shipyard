@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
@@ -145,13 +146,13 @@ public class Column : ModelBase
 	/// Gets or sets the name of the column.
 	/// </summary>
 	/// <value>The name of the column.</value>
-	public string? ColumnName { get => Get<string?>(); set => Set(value); }
+	public string ColumnName { get => Get<string>(); set => Set(value); }
 
 	/// <summary>
 	/// Gets or sets the default value for the column.
 	/// </summary>
 	/// <value>The default value.</value>
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1721:Property names should not match get methods", Justification = "<Pending>")]
+	[SuppressMessage("Naming", "CA1721:Property names should not match get methods", Justification = "GetDefault is not a public method.")]
 	public string? Default { get => Get<string?>(); set => Set(value); }
 
 	/// <summary>
@@ -267,39 +268,39 @@ public class Column : ModelBase
 				return SqlServerTypeOverride;
 
 			var typeCode = SqlServerType;
-			if (typeCode == null)
-				typeCode = Type switch
-				{
-					DbType.AnsiString => SqlDbType.Char,
-					DbType.AnsiStringFixedLength => SqlDbType.Char,
-					DbType.Binary => SqlDbType.VarBinary,
-					DbType.Boolean => SqlDbType.Bit,
-					DbType.Byte => SqlDbType.TinyInt,
-					DbType.Currency => SqlDbType.Money,
-					DbType.Date => SqlDbType.Date,
-					DbType.DateTime => SqlDbType.DateTime,
-					DbType.DateTime2 => SqlDbType.DateTime2,
-					DbType.DateTimeOffset => SqlDbType.DateTimeOffset,
-					DbType.Decimal => SqlDbType.Decimal,
-					DbType.Double => SqlDbType.Float,
-					DbType.Guid => SqlDbType.UniqueIdentifier,
-					DbType.Int16 => SqlDbType.SmallInt,
-					DbType.Int32 => SqlDbType.Int,
-					DbType.Int64 => SqlDbType.BigInt,
-					DbType.Object => SqlDbType.Variant,
-					//DbType.SByte => System.Data.SqlDbType  ,
-					DbType.Single => SqlDbType.Float,
-					DbType.String => SqlDbType.NVarChar,
-					DbType.StringFixedLength => SqlDbType.NChar,
-					DbType.Time => SqlDbType.Time,
-					//DbType.UInt16 => System.Data.SqlDbType  ,
-					//DbType.UInt32 => System.Data.SqlDbType  ,
-					//DbType.UInt64 => System.Data.SqlDbType  ,
-					DbType.VarNumeric => SqlDbType.Decimal,
-					DbType.Xml => SqlDbType.Xml,
 
-					_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
-				};
+			typeCode ??= Type switch
+			{
+				DbType.AnsiString => SqlDbType.Char,
+				DbType.AnsiStringFixedLength => SqlDbType.Char,
+				DbType.Binary => SqlDbType.VarBinary,
+				DbType.Boolean => SqlDbType.Bit,
+				DbType.Byte => SqlDbType.TinyInt,
+				DbType.Currency => SqlDbType.Money,
+				DbType.Date => SqlDbType.Date,
+				DbType.DateTime => SqlDbType.DateTime,
+				DbType.DateTime2 => SqlDbType.DateTime2,
+				DbType.DateTimeOffset => SqlDbType.DateTimeOffset,
+				DbType.Decimal => SqlDbType.Decimal,
+				DbType.Double => SqlDbType.Float,
+				DbType.Guid => SqlDbType.UniqueIdentifier,
+				DbType.Int16 => SqlDbType.SmallInt,
+				DbType.Int32 => SqlDbType.Int,
+				DbType.Int64 => SqlDbType.BigInt,
+				DbType.Object => SqlDbType.Variant,
+				//DbType.SByte => System.Data.SqlDbType  ,
+				DbType.Single => SqlDbType.Float,
+				DbType.String => SqlDbType.NVarChar,
+				DbType.StringFixedLength => SqlDbType.NChar,
+				DbType.Time => SqlDbType.Time,
+				//DbType.UInt16 => System.Data.SqlDbType  ,
+				//DbType.UInt32 => System.Data.SqlDbType  ,
+				//DbType.UInt64 => System.Data.SqlDbType  ,
+				DbType.VarNumeric => SqlDbType.Decimal,
+				DbType.Xml => SqlDbType.Xml,
+
+				_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
+			};
 
 			return typeCode switch
 			{
