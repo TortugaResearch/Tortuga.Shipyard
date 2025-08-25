@@ -6,6 +6,3 @@ namespace Tortuga.Shipyard;
 /// Represents a collection of <see cref="Table" /> objects.
 /// </summary>
 public class TableCollection : ModelCollection<Table>;
-{
-    // No additional members.
-}

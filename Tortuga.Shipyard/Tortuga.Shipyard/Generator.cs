@@ -74,4 +74,23 @@ public abstract class Generator : ModelBase
 	/// <param name="table">The table.</param>
 	/// <returns>List&lt;ValidationResult&gt;.</returns>
 	public abstract List<ValidationResult> ValidateTable(Table table);
+
+	/// <summary>
+	/// Calculates and assigns aliases for sources in the specified view.
+	/// </summary>
+	/// <param name="view">The view for which to calculate aliases.</param>
+	public abstract void CalculateAliases(View view);
+
+	/// <summary>
+	/// Calculates and assigns join expressions for joined sources in the specified view.
+	/// </summary>
+	/// <param name="view">The view for which to calculate join expressions.</param>
+	public abstract void CalculateJoinExpressions(View view);
+
+	/// <summary>
+	/// Generates the SQL statement for creating the specified view.
+	/// </summary>
+	/// <param name="view">The view to generate SQL for.</param>
+	/// <returns>The SQL CREATE VIEW statement.</returns>
+	public abstract string BuildView(View view);
 }

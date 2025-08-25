@@ -1,16 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Tortuga.Anchor.Modeling;
+﻿using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
-
-public class JoinedViewSource : ViewSource
-{
-	public JoinedViewSource(string schemaName, string viewName) : base(schemaName, viewName)
-	{
-		//TODO: This is a view source with a join expression.
-		//		Need to reference the parent table/view, type of join, and join expression.
-	}
-}
 
 public class View : ModelBase
 {
@@ -38,87 +28,39 @@ public class View : ModelBase
 	/// </summary>
 	/// <value>The name of the view.</value>
 	public string? ViewName { get => Get<string?>(); set => Set(value); }
-}
 
-public class ViewSource : ModelBase
-{
 	/// <summary>
-	/// Initializes a new instance of the <see cref="Table" /> class with the specified schema and table name.
+	/// Adds a join to the view using the specified join type, table, join column, and optional join rules.
 	/// </summary>
-	/// <param name="schemaName">The schema name.</param>
-	/// <param name="tableOrViewName">The table or view being refernced.</param>
-	public ViewSource(string schemaName, string tableOrViewName)
+	/// <param name="joinType">The type of join to use (e.g., InnerJoin, LeftJoin).</param>
+	/// <param name="nameTable">The table to join with the view.</param>
+	/// <param name="joinColumn">The column name on which to perform the join.</param>
+	/// <param name="joinRules">Optional rules for the join, such as prefixing column aliases.</param>
+	public void Join(JoinType joinType, Table nameTable, string joinColumn, JoinRules joinRules = new())
 	{
-		SchemaName = schemaName;
-		TableOrViewName = tableOrViewName;
+		if (nameTable == null)
+			throw new ArgumentNullException(nameof(nameTable), $"{nameof(nameTable)} is null.");
+		if (string.IsNullOrEmpty(joinColumn))
+			throw new ArgumentException($"{nameof(joinColumn)} is null or empty.", nameof(joinColumn));
+
+		var result = new JoinedViewSource(nameTable.SchemaName, nameTable.TableName, joinType, new List<string> { joinColumn }, new List<string> { joinColumn });
+
+		if (joinRules.PrefixColumnAlias == null)
+			foreach (var column in nameTable.Columns.Where(c => c.ColumnName != joinColumn && !ContainsColumn(c.ColumnName)))
+				result.Outputs.Add(new OutputColumn(column.ColumnName, "{0}." + column.ColumnName));
+		else
+			foreach (var column in nameTable.Columns)
+			{
+				var columnName = joinRules.PrefixColumnAlias + column.ColumnName;
+				if (!ContainsColumn(columnName))
+					result.Outputs.Add(new OutputColumn(columnName, "{0}." + column.ColumnName));
+			}
+
+		Sources.Add(result);
 	}
 
-	/// <summary>
-	/// Gets or sets the alias used when referencing columns.
-	/// </summary>
-	public string? Alias { get => Get<string?>(); set => Set(value); }
-
-	public List<OutputColumn> Outputs => GetNew<List<OutputColumn>>();
-
-	/// <summary>
-	/// Gets or sets the schema name of the table.
-	/// </summary>
-	/// <value>The name of the schema.</value>
-	public string? SchemaName { get => Get<string?>(); set => Set(value); }
-
-	/// <summary>
-	/// Gets or sets the table or view name.
-	/// </summary>
-	/// <value>The name of the table or view.</value>
-	public string? TableOrViewName { get => Get<string?>(); set => Set(value); }
-
-	/// <summary>
-	/// Adds an output column based on the source table or view..
-	/// </summary>
-	/// <param name="columnName">The column name.</param>
-	public ViewSource AddColumn(string columnName)
+	bool ContainsColumn(string columnName)
 	{
-		Outputs.Add(new(columnName));
-		return this;
+		return Sources.Any(s => s.Outputs.Any(c => string.Equals(c.ColumnName, columnName, StringComparison.OrdinalIgnoreCase)));
 	}
-
-	/// <summary>
-	/// Adds an output column based on an expression.
-	/// </summary>
-	/// <param name="columnName">Name of the column as it will be exposed by the view.</param>
-	/// <param name="expression">The expression.</param>
-	/// <remarks>Use {0} as a placeholder for the table or view's alias.</remarks>
-	public ViewSource AddExpression(string columnName, string expression)
-	{
-		Outputs.Add(new(columnName, expression));
-		return this;
-	}
-}
-
-public class OutputColumn : ModelBase
-{
-	public OutputColumn(string? columnName)
-	{
-		ColumnName = columnName;
-	}
-
-	public OutputColumn(string columnName, string expression)
-	{
-		ColumnName = columnName;
-		Expression = expression;
-	}
-
-	/// <summary>
-	/// Gets or sets the name of the column.
-	/// </summary>
-	/// <value>Name of the column as it will be exposed by the view.</value>
-	[Required]
-	public string? ColumnName { get => Get<string?>(); set => Set(value); }
-
-	/// <summary>
-	/// Gets or sets the expression. If null, the column name will be used.
-	/// </summary>
-	/// <value>The expression.</value>
-	/// <remarks>Use {0} as a placeholder for the table or view's alias.</remarks>
-	public string? Expression { get => Get<string?>(); set => Set(value); }
 }

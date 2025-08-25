@@ -6,7 +6,7 @@ using Index = Tortuga.Shipyard.Index;
 namespace ShipyardTests;
 
 [TestClass]
-public sealed class SqlServerTableTests
+public sealed partial class SqlServerTableTests : TestsBase
 {
 	[TestMethod]
 	public void No_Columns_Test()
@@ -119,15 +119,7 @@ GO
 		generator.UseBatchSeperator = true;
 		var output = generator.BuildTable(table);
 
-		var lines1 = expected.Split("\r\n");
-		var lines2 = output.Split("\r\n");
-		for (int i = 0; i < Math.Min(lines1.Length, lines2.Length); i++)
-		{
-			Assert.AreEqual(lines1[i], lines2[i], $"Mismatch on line {i + 1}");
-		}
-
-		Assert.AreEqual(expected, output);
-
+		CompareOutput(expected, output);
 		Debug.WriteLine(output);
 	}
 
@@ -164,7 +156,6 @@ GO
 
 ";
 
-		var generator = new SqlServerGenerator();
 		var table = new Table("Imports", "NameAddresses");
 
 		table.Columns.Add(new("ImportKey", DbType.Int32) { IsPrimaryKey = true, IsIdentity = true });
@@ -188,20 +179,13 @@ GO
 		table.ClusteredIndex = new Index() { OrderedColumns = { "ImportRunId", "ImportKey" } };
 		table.Indexes.Add(new Index() { IndexName = "PK2_Imports_NameAddresses", OrderedColumns = { "ImportRunId", "NameId", "SequenceNumber" } });
 
+		var generator = new SqlServerGenerator();
 		generator.UseBatchSeperator = true;
 		generator.IncludeSchemaNameInConstraintNames = true;
 		generator.NameConstraints(table);
 		var output = generator.BuildTable(table);
 
-		var lines1 = expected.Split("\r\n");
-		var lines2 = output.Split("\r\n");
-		for (int i = 0; i < Math.Min(lines1.Length, lines2.Length); i++)
-		{
-			Assert.AreEqual(lines1[i], lines2[i], $"Mismatch on line {i + 1}");
-		}
-
-		Assert.AreEqual(expected, output);
-
+		CompareOutput(expected, output);
 		Debug.WriteLine(output);
 	}
 
@@ -260,15 +244,7 @@ GO
 		generator.NameConstraints(table);
 		var output = generator.BuildTable(table);
 
-		var lines1 = expected.Split("\r\n");
-		var lines2 = output.Split("\r\n");
-		for (int i = 0; i < Math.Min(lines1.Length, lines2.Length); i++)
-		{
-			Assert.AreEqual(lines1[i], lines2[i], $"Mismatch on line {i + 1}");
-		}
-
-		Assert.AreEqual(expected, output);
-
+		CompareOutput(expected, output);
 		Debug.WriteLine(output);
 	}
 }

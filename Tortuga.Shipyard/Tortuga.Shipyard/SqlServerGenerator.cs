@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using Tortuga.Anchor;
 
@@ -176,6 +177,102 @@ public class SqlServerGenerator : Generator
 		return output.ToString();
 	}
 
+	public override void CalculateAliases(View view)
+	{
+		if (view == null)
+			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
+
+		foreach (var source in view.Sources.Where(v => v.Alias == null))
+		{
+			// Convert baseAlias to a string
+			var baseAlias = new string(source.TableOrViewName!.Where(c => char.IsUpper(c)).Select(c => char.ToLower(c, CultureInfo.InvariantCulture)).ToArray());
+			if (baseAlias.Length == 0)
+				baseAlias = source.TableOrViewName!.Substring(0, 1).ToLowerInvariant();
+
+			var alias = baseAlias;
+			int counter = 1;
+			while (view.Sources.Any(s => s != source && s.Alias == alias))
+			{
+				alias = baseAlias + counter.ToString();
+				counter++;
+			}
+			source.Alias = alias;
+		}
+	}
+
+	public override void CalculateJoinExpressions(View view)
+	{
+		if (view == null)
+			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
+
+		foreach (var source in view.Sources.OfType<JoinedViewSource>().Where(v => v.JoinExpression == null))
+		{
+			var express = new List<string>();
+			for (int i = 0; i < source.LeftJoinColumns.Count; i++)
+			{
+				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.Any(o => o.ColumnName == source.LeftJoinColumns[i]));
+				if (parentTable == null)
+					throw new InvalidOperationException($"Unable to find a source that contains column {source.LeftJoinColumns[i]}.");
+				express.Add($"{EscapeIdentifier(parentTable.Alias ?? parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
+			}
+			source.JoinExpression = string.Join(" AND ", express);
+		}
+	}
+
+	public override string BuildView(View view)
+	{
+		if (view == null)
+			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
+
+		var output = new StringBuilder();
+
+		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
+		output.AppendLine("(");
+		output.AppendLine("SELECT");
+		foreach (var source in view.Sources)
+		{
+			foreach (var outputColumn in source.Outputs)
+			{
+				if (outputColumn.Expression != null)
+					output.AppendLine($"\t{string.Format(outputColumn.Expression, EscapeIdentifier(source.Alias ?? source.TableOrViewName))} AS {EscapeIdentifier(outputColumn.ColumnName)},");
+				else
+					output.AppendLine($"\t{EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(outputColumn.ColumnName)},");
+			}
+		}
+		output.Remove(output.Length - 3, 1); //remove trailing comma
+
+		{
+			var source = view.Sources[0];
+			output.AppendLine($"FROM {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
+		}
+
+		foreach (JoinedViewSource source in view.Sources.Skip(1))
+		{
+			var joinTypeString = source.JoinType switch
+			{
+				JoinType.InnerJoin => "INNER JOIN",
+				JoinType.LeftJoin => "LEFT JOIN",
+				JoinType.RightJoin => "RIGHT JOIN",
+				JoinType.FullJoin => "FULL OUTER JOIN",
+				JoinType.CrossJoin => "CROSS JOIN",
+				_ => throw new NotSupportedException($"Join type {source.JoinType} is not supported."),
+			};
+			output.AppendLine($"{joinTypeString} {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
+			if (source.JoinType != JoinType.CrossJoin)
+				output.AppendLine($"\tON {source.JoinExpression}");
+
+
+
+		}
+
+		output.AppendLine(");");
+
+
+
+
+		return output.ToString();
+	}
+
 	/// <summary>
 	/// Names the constraints.
 	/// </summary>
@@ -271,4 +368,5 @@ public class SqlServerGenerator : Generator
 		else
 			return identifier;
 	}
+
 }
