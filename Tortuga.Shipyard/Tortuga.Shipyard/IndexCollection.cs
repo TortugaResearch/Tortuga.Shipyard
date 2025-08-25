@@ -3,6 +3,6 @@
 namespace Tortuga.Shipyard;
 
 /// <summary>
-/// Class IndexCollection.
+/// Represents a collection of <see cref="Index" /> objects.
 /// </summary>
 public class IndexCollection : ModelCollection<Index>;

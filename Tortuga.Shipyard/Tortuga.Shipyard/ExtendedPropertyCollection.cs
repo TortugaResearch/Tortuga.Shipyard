@@ -3,6 +3,6 @@
 namespace Tortuga.Shipyard;
 
 /// <summary>
-/// Class ExtendedPropertyCollection.
+/// Represents a collection of <see cref="ExtendedProperty" /> objects.
 /// </summary>
 public class ExtendedPropertyCollection : ModelCollection<ExtendedProperty>;
