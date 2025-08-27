@@ -1,7 +1,5 @@
 ﻿using System.Collections.Immutable;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using Tortuga.Anchor;
@@ -69,7 +67,7 @@ public class SqlServerGenerator : Generator
 			else
 				nullString = "NOT NULL";
 
-			output.Append($"\t{column.ColumnName} {column.SqlServerFullType} {nullString}");
+			output.Append($"\t{EscapeIdentifier(column.ColumnName)} {column.SqlServerFullType} {nullString}");
 
 			if (column.IsPrimaryKey && !table.HasCompoundPrimaryKey)
 			{
@@ -105,7 +103,7 @@ public class SqlServerGenerator : Generator
 			{
 				if (column.FKConstraintName != null)
 					output.Append($" CONSTRAINT {column.FKConstraintName}");
-				output.Append($" REFERENCES {column.FKSchemaName ?? table.SchemaName}.{column.FKTableName}({column.FKColumnName})");
+				output.Append($" REFERENCES {EscapeIdentifier(column.FKSchemaName ?? table.SchemaName)}.{EscapeIdentifier(column.FKTableName)}({EscapeIdentifier(column.FKColumnName)})");
 			}
 
 			output.AppendLine(",");
@@ -115,8 +113,8 @@ public class SqlServerGenerator : Generator
 		{
 			output.Append('\t');
 			if (table.PrimaryKeyConstraintName != null)
-				output.Append($"CONSTRAINT {table.PrimaryKeyConstraintName}");
-			output.AppendLine($" PRIMARY KEY ({string.Join(",", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
+				output.Append($"CONSTRAINT {table.PrimaryKeyConstraintName} ");
+			output.AppendLine($"PRIMARY KEY ({string.Join(",", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
 		}
 
 		output.Remove(output.Length - 3, 1); //remove trailing comma
@@ -177,6 +175,54 @@ public class SqlServerGenerator : Generator
 		return output.ToString();
 	}
 
+	public override string BuildView(View view)
+	{
+		if (view == null)
+			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
+
+		var output = new StringBuilder();
+
+		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
+		output.AppendLine("(");
+		output.AppendLine("SELECT");
+		foreach (var source in view.Sources)
+		{
+			foreach (var outputColumn in source.Outputs)
+			{
+				if (outputColumn.Expression != null)
+					output.AppendLine($"\t{string.Format(outputColumn.Expression, EscapeIdentifier(source.Alias ?? source.TableOrViewName))} AS {EscapeIdentifier(outputColumn.ColumnName)},");
+				else
+					output.AppendLine($"\t{EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(outputColumn.ColumnName)},");
+			}
+		}
+		output.Remove(output.Length - 3, 1); //remove trailing comma
+
+		{
+			var source = view.Sources[0];
+			output.AppendLine($"FROM {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
+		}
+
+		foreach (JoinedViewSource source in view.Sources.Skip(1))
+		{
+			var joinTypeString = source.JoinType switch
+			{
+				JoinType.InnerJoin => "INNER JOIN",
+				JoinType.LeftJoin => "LEFT JOIN",
+				JoinType.RightJoin => "RIGHT JOIN",
+				JoinType.FullJoin => "FULL OUTER JOIN",
+				JoinType.CrossJoin => "CROSS JOIN",
+				_ => throw new NotSupportedException($"Join type {source.JoinType} is not supported."),
+			};
+			output.AppendLine($"{joinTypeString} {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
+			if (source.JoinType != JoinType.CrossJoin)
+				output.AppendLine($"\tON {source.JoinExpression}");
+		}
+
+		output.AppendLine(");");
+
+		return output.ToString();
+	}
+
 	public override void CalculateAliases(View view)
 	{
 		if (view == null)
@@ -219,60 +265,6 @@ public class SqlServerGenerator : Generator
 		}
 	}
 
-	public override string BuildView(View view)
-	{
-		if (view == null)
-			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
-
-		var output = new StringBuilder();
-
-		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
-		output.AppendLine("(");
-		output.AppendLine("SELECT");
-		foreach (var source in view.Sources)
-		{
-			foreach (var outputColumn in source.Outputs)
-			{
-				if (outputColumn.Expression != null)
-					output.AppendLine($"\t{string.Format(outputColumn.Expression, EscapeIdentifier(source.Alias ?? source.TableOrViewName))} AS {EscapeIdentifier(outputColumn.ColumnName)},");
-				else
-					output.AppendLine($"\t{EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(outputColumn.ColumnName)},");
-			}
-		}
-		output.Remove(output.Length - 3, 1); //remove trailing comma
-
-		{
-			var source = view.Sources[0];
-			output.AppendLine($"FROM {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
-		}
-
-		foreach (JoinedViewSource source in view.Sources.Skip(1))
-		{
-			var joinTypeString = source.JoinType switch
-			{
-				JoinType.InnerJoin => "INNER JOIN",
-				JoinType.LeftJoin => "LEFT JOIN",
-				JoinType.RightJoin => "RIGHT JOIN",
-				JoinType.FullJoin => "FULL OUTER JOIN",
-				JoinType.CrossJoin => "CROSS JOIN",
-				_ => throw new NotSupportedException($"Join type {source.JoinType} is not supported."),
-			};
-			output.AppendLine($"{joinTypeString} {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
-			if (source.JoinType != JoinType.CrossJoin)
-				output.AppendLine($"\tON {source.JoinExpression}");
-
-
-
-		}
-
-		output.AppendLine(");");
-
-
-
-
-		return output.ToString();
-	}
-
 	/// <summary>
 	/// Names the constraints.
 	/// </summary>
@@ -283,13 +275,13 @@ public class SqlServerGenerator : Generator
 		if (table == null)
 			throw new ArgumentNullException(nameof(table), $"{nameof(table)} is null.");
 
-		var schemaPart = IncludeSchemaNameInConstraintNames ? $"_{table.SchemaName}" : "";
+		var schemaPart = IncludeSchemaNameInConstraintNames ? $"{table.SchemaName}_" : "";
 
 		if (table.PrimaryKeyConstraintName == null && table.Columns.Any(c => c.IsPrimaryKey))
-			table.PrimaryKeyConstraintName = $"PK{schemaPart}_{table.TableName}";
+			table.PrimaryKeyConstraintName = $"PK_{schemaPart}{table.TableName}";
 
 		if (table.ClusteredIndex != null && table.ClusteredIndex.IndexName == null)
-			table.ClusteredIndex.IndexName = $"CX{schemaPart}_{table.TableName}";
+			table.ClusteredIndex.IndexName = $"CX_{schemaPart}{table.TableName}";
 
 		foreach (var column in table.Columns)
 		{
@@ -303,44 +295,24 @@ public class SqlServerGenerator : Generator
 				column.UniqueConstraintName = $"UX_{column.ColumnName}";
 
 			if (column.FKConstraintName == null && column.FKColumnName != null)
-				column.FKConstraintName = $"FK{schemaPart}_{table.TableName}_{column.ColumnName}";
+				column.FKConstraintName = $"FK_{schemaPart}{table.TableName}_{column.ColumnName}";
 		}
 	}
 
 	/// <summary>
-	/// Validates the table.
+	/// Escapes the identifier.
 	/// </summary>
-	/// <param name="table">The table.</param>
-	/// <returns>List&lt;ValidationResult&gt;.</returns>
-	/// <exception cref="ArgumentNullException">table</exception>
-	public override List<ValidationResult> ValidateTable(Table table)
+	/// <param name="identifier">The identifier.</param>
+	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
+	protected override string? EscapeIdentifier(string? identifier)
 	{
-		if (table == null)
-			throw new ArgumentNullException(nameof(table), $"{nameof(table)} is null.");
+		if (identifier == null)
+			return null;
 
-		table.Validate();
-		var result = new List<ValidationResult>();
-		result.AddRange(table.GetAllErrors());
-
-		foreach (var column in table.Columns)
-		{
-			column.Validate();
-			result.AddRange(column.GetAllErrors());
-		}
-
-		if (table.ClusteredIndex != null)
-		{
-			table.ClusteredIndex.Validate();
-			result.AddRange(table.GetAllErrors());
-		}
-
-		foreach (var index in table.Indexes)
-		{
-			index.Validate();
-			result.AddRange(index.GetAllErrors());
-		}
-
-		return result;
+		if (EscapeAllIdentifiers || Keywords.Contains(identifier))
+			return '[' + identifier + ']';
+		else
+			return identifier;
 	}
 
 	private void EndBatch(StringBuilder output)
@@ -350,23 +322,7 @@ public class SqlServerGenerator : Generator
 			output.AppendLine("GO");
 			output.AppendLine();
 		}
-	}
-
-	/// <summary>
-	/// Escapes the identifier.
-	/// </summary>
-	/// <param name="identifier">The identifier.</param>
-	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
-	[return: NotNullIfNotNull(nameof(identifier))]
-	string? EscapeIdentifier(string? identifier)
-	{
-		if (identifier == null)
-			return null;
-
-		if (EscapeAllIdentifiers || Keywords.Contains(identifier))
-			return "[" + identifier + "]";
 		else
-			return identifier;
+			output.AppendLine();
 	}
-
 }

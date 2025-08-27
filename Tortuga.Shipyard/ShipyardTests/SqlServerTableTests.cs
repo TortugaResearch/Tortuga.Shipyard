@@ -37,7 +37,7 @@ public sealed partial class SqlServerTableTests : TestsBase
 	CreditBureauAddressIndicator NVARCHAR(2) NULL,
 	CreditBureauResidenceCode NVARCHAR(1) NULL,
 	EmailAddress NVARCHAR(40) NULL,
-	State INT NULL,
+	[State] INT NULL,
 	TimeZone SMALLINT NULL,
 	WebAddress NVARCHAR(40) NULL,
 	ZipCode NVARCHAR(12) NULL,
@@ -77,7 +77,6 @@ GO
 
 ";
 
-		var generator = new SqlServerGenerator();
 		var table = new Table("Denormalized", "Address") { Description = "Address" };
 
 		table.Columns.Add(new("AddressKey", DbType.Int32)
@@ -115,6 +114,7 @@ GO
 		table.Columns.Add(new("LastImportRunId", DbType.Guid, false));
 		table.Columns.Add(new("LastImportDateTime", DbType.DateTime2, 7, false));
 
+		var generator = new SqlServerGenerator();
 		generator.NameConstraints(table);
 		generator.UseBatchSeperator = true;
 		var output = generator.BuildTable(table);
@@ -218,7 +218,6 @@ GO
 
 ";
 
-		var generator = new SqlServerGenerator();
 		var table = new Table("Storage", "NameAddresses");
 
 		table.Columns.Add(new("NameAddressesKey", DbType.Int32) { IsPrimaryKey = true, IsIdentity = true });
@@ -240,6 +239,7 @@ GO
 
 		table.Indexes.Add(new Index() { IndexName = "PK2_NameAddresses", OrderedColumns = { "NameId", "SequenceNumber" }, IsUnique = true, IsConstraint = true });
 
+		var generator = new SqlServerGenerator();
 		generator.UseBatchSeperator = true;
 		generator.NameConstraints(table);
 		var output = generator.BuildTable(table);

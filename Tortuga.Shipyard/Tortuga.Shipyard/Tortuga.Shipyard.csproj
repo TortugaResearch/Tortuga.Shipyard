@@ -34,6 +34,7 @@
 
 
 	<ItemGroup>
+		<PackageReference Include="Npgsql" Version="9.0.3" />
 		<PackageReference Include="System.Collections.Immutable" Version="9.0.4" />
 		<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
 		<PackageReference Include="Tortuga.Anchor" Version="5.0.1" />
