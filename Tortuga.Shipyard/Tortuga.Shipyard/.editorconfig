@@ -82,6 +82,9 @@ dotnet_diagnostic.CS1591.severity = suggestion
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.CA1308.severity = none
 
+# CA1024: Use properties where appropriate
+dotnet_diagnostic.CA1024.severity = silent
+
 [*.{cs,vb}]
 #### Naming styles ####
 

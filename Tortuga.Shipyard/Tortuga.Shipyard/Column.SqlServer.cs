@@ -21,89 +21,93 @@ partial class Column : ModelBase
 	/// <summary>
 	/// Gets the full SQL Server type of the column, including length, precision, and scale as appropriate.
 	/// </summary>
-	/// <value>The full type of the SQL server.</value>
-	public string SqlServerFullType
+	/// <returns>The full type of the SQL server.</returns>
+	public string CalculateSqlServerFullType()
 	{
-		get
+		if (SqlServerTypeOverride != null)
+			return SqlServerTypeOverride;
+
+		var typeCode = CalculateSqlServerType();
+
+		return typeCode switch
 		{
-			if (SqlServerTypeOverride != null)
-				return SqlServerTypeOverride;
+			SqlDbType.BigInt => $"BIGINT",
+			SqlDbType.Binary => $"BINARY({MaxLength})",
+			SqlDbType.Bit => $"BIT",
+			SqlDbType.Char => $"CHAR({MaxLength})",
+			SqlDbType.Date => $"DATE",
+			SqlDbType.DateTime => $"DATETIME",
+			SqlDbType.DateTime2 =>
+				Precision.HasValue ? $"DATETIME2({Precision})" :
+				$"DATETIME2",
+			SqlDbType.DateTimeOffset => $"DATETIMEOFFSET",
+			SqlDbType.Decimal =>
+				Precision.HasValue && Scale.HasValue ? $"DECIMAL({Precision},{Scale})" :
+				Precision.HasValue ? $"DECIMAL({Precision})" :
+				$"DECIMAL()",
+			SqlDbType.Float => $"FLOAT",
+			SqlDbType.Image => $"IMAGE",
+			SqlDbType.Int => $"INT",
+			SqlDbType.Money => $"MONEY",
+			SqlDbType.NChar => $"NCHAR({MaxLength})",
+			SqlDbType.NText => $"NTEXT",
+			SqlDbType.NVarChar => $"NVARCHAR({(MaxLength == -1 ? "MAX" : MaxLength)})",
+			SqlDbType.Real => $"REAL",
+			SqlDbType.SmallDateTime => $"SMALLDATETIME",
+			SqlDbType.SmallInt => $"SMALLINT",
+			SqlDbType.SmallMoney => $"SMALLMONEY",
+			SqlDbType.Text => $"TEXT",
+			SqlDbType.Time => $"TIME",
+			SqlDbType.Timestamp => $"",
+			SqlDbType.TinyInt => $"TINYINT",
+			SqlDbType.UniqueIdentifier => $"UNIQUEIDENTIFIER",
+			SqlDbType.VarBinary => $"VARBINARY({(MaxLength == -1 ? "MAX" : MaxLength)})",
+			SqlDbType.VarChar => $"VARCHAR({(MaxLength == -1 ? "MAX" : MaxLength)})",
+			SqlDbType.Variant => $"VARIANT",
+			SqlDbType.Xml => $"XML",
 
-			var typeCode = SqlServerType;
+			_ => throw new NotSupportedException($"Uknown SqlDbType '{typeCode}'")
+		};
+	}
 
-			typeCode ??= Type switch
-			{
-				DbType.AnsiString => SqlDbType.Char,
-				DbType.AnsiStringFixedLength => SqlDbType.Char,
-				DbType.Binary => SqlDbType.VarBinary,
-				DbType.Boolean => SqlDbType.Bit,
-				DbType.Byte => SqlDbType.TinyInt,
-				DbType.Currency => SqlDbType.Money,
-				DbType.Date => SqlDbType.Date,
-				DbType.DateTime => SqlDbType.DateTime,
-				DbType.DateTime2 => SqlDbType.DateTime2,
-				DbType.DateTimeOffset => SqlDbType.DateTimeOffset,
-				DbType.Decimal => SqlDbType.Decimal,
-				DbType.Double => SqlDbType.Float,
-				DbType.Guid => SqlDbType.UniqueIdentifier,
-				DbType.Int16 => SqlDbType.SmallInt,
-				DbType.Int32 => SqlDbType.Int,
-				DbType.Int64 => SqlDbType.BigInt,
-				DbType.Object => SqlDbType.Variant,
-				//DbType.SByte => System.Data.SqlDbType  ,
-				DbType.Single => SqlDbType.Real,
-				DbType.String => SqlDbType.NVarChar,
-				DbType.StringFixedLength => SqlDbType.NChar,
-				DbType.Time => SqlDbType.Time,
-				//DbType.UInt16 => System.Data.SqlDbType  ,
-				//DbType.UInt32 => System.Data.SqlDbType  ,
-				//DbType.UInt64 => System.Data.SqlDbType  ,
-				DbType.VarNumeric => SqlDbType.Decimal,
-				DbType.Xml => SqlDbType.Xml,
+	/// <summary>
+	/// Gets the SqlDbType for SQL server, converting from DbType if necessary.
+	/// </summary>
+	/// <returns>System.Nullable&lt;SqlDbType&gt;.</returns>
+	public SqlDbType CalculateSqlServerType()
+	{
+		return SqlServerType ?? Type switch
+		{
+			DbType.AnsiString => SqlDbType.Char,
+			DbType.AnsiStringFixedLength => SqlDbType.Char,
+			DbType.Binary => SqlDbType.VarBinary,
+			DbType.Boolean => SqlDbType.Bit,
+			DbType.Byte => SqlDbType.TinyInt,
+			DbType.Currency => SqlDbType.Money,
+			DbType.Date => SqlDbType.Date,
+			DbType.DateTime => SqlDbType.DateTime,
+			DbType.DateTime2 => SqlDbType.DateTime2,
+			DbType.DateTimeOffset => SqlDbType.DateTimeOffset,
+			DbType.Decimal => SqlDbType.Decimal,
+			DbType.Double => SqlDbType.Float,
+			DbType.Guid => SqlDbType.UniqueIdentifier,
+			DbType.Int16 => SqlDbType.SmallInt,
+			DbType.Int32 => SqlDbType.Int,
+			DbType.Int64 => SqlDbType.BigInt,
+			DbType.Object => SqlDbType.Variant,
+			//DbType.SByte => System.Data.SqlDbType  ,
+			DbType.Single => SqlDbType.Real,
+			DbType.String => SqlDbType.NVarChar,
+			DbType.StringFixedLength => SqlDbType.NChar,
+			DbType.Time => SqlDbType.Time,
+			//DbType.UInt16 => System.Data.SqlDbType  ,
+			//DbType.UInt32 => System.Data.SqlDbType  ,
+			//DbType.UInt64 => System.Data.SqlDbType  ,
+			DbType.VarNumeric => SqlDbType.Decimal,
+			DbType.Xml => SqlDbType.Xml,
 
-				_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
-			};
-
-			return typeCode switch
-			{
-				SqlDbType.BigInt => $"BIGINT",
-				SqlDbType.Binary => $"BINARY({MaxLength})",
-				SqlDbType.Bit => $"BIT",
-				SqlDbType.Char => $"CHAR({MaxLength})",
-				SqlDbType.Date => $"DATE",
-				SqlDbType.DateTime => $"DATETIME",
-				SqlDbType.DateTime2 =>
-					Precision.HasValue ? $"DATETIME2({Precision})" :
-					$"DATETIME2",
-				SqlDbType.DateTimeOffset => $"DATETIMEOFFSET",
-				SqlDbType.Decimal =>
-					Precision.HasValue && Scale.HasValue ? $"DECIMAL({Precision},{Scale})" :
-					Precision.HasValue ? $"DECIMAL({Precision})" :
-					$"DECIMAL()",
-				SqlDbType.Float => $"FLOAT",
-				SqlDbType.Image => $"IMAGE",
-				SqlDbType.Int => $"INT",
-				SqlDbType.Money => $"MONEY",
-				SqlDbType.NChar => $"NCHAR({MaxLength})",
-				SqlDbType.NText => $"NTEXT",
-				SqlDbType.NVarChar => $"NVARCHAR({(MaxLength == -1 ? "MAX" : MaxLength)})",
-				SqlDbType.Real => $"REAL",
-				SqlDbType.SmallDateTime => $"SMALLDATETIME",
-				SqlDbType.SmallInt => $"SMALLINT",
-				SqlDbType.SmallMoney => $"SMALLMONEY",
-				SqlDbType.Text => $"TEXT",
-				SqlDbType.Time => $"TIME",
-				SqlDbType.Timestamp => $"",
-				SqlDbType.TinyInt => $"TINYINT",
-				SqlDbType.UniqueIdentifier => $"UNIQUEIDENTIFIER",
-				SqlDbType.VarBinary => $"VARBINARY({MaxLength})",
-				SqlDbType.VarChar => $"VARCHAR({(MaxLength == -1 ? "MAX" : MaxLength)})",
-				SqlDbType.Variant => $"VARIANT",
-				SqlDbType.Xml => $"XML",
-
-				_ => throw new NotSupportedException($"Uknown SqlDbType '{typeCode}'")
-			};
-		}
+			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
+		};
 	}
 
 	/// <summary>

@@ -29,7 +29,7 @@ public class PostgreSqlGenerator : Generator
 	/// <summary>
 	/// Gets or sets a value indicating whether to include schema name when generating a constraint name.
 	/// </summary>
-	public bool IncludeSchemaNameInConstraintNames { get => Get<bool>(); set => Set(value); }
+	public bool IncludeSchemaNameInConstraintNames { get; set; }
 
 	/// <summary>
 	/// Builds the table.
@@ -57,7 +57,7 @@ public class PostgreSqlGenerator : Generator
 			else
 				nullString = "NOT NULL";
 
-			output.Append($"\t{EscapeIdentifier(column.ColumnName)} {column.PostgreSqlFullType} {nullString}".TrimEnd());
+			output.Append($"\t{EscapeIdentifier(column.ColumnName)} {column.CalculatePostgreSqlFullType()} {nullString}".TrimEnd());
 
 			//if (column.IsPrimaryKey && !table.HasCompoundPrimaryKey)
 			//{

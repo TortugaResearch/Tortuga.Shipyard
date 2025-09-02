@@ -9,16 +9,15 @@ namespace Tortuga.Shipyard;
 
 /// <summary>
 /// Class Generator.
-/// Implements the <see cref="ModelBase" />
 /// </summary>
 /// <seealso cref="ModelBase" />
-public abstract class Generator : ModelBase
+public abstract class Generator
 {
 	/// <summary>
 	/// Gets or sets a value indicating whether [escape all identifiers].
 	/// </summary>
 	/// <value><c>true</c> if [escape all identifiers]; otherwise, <c>false</c>.</value>
-	public bool EscapeAllIdentifiers { get => Get<bool>(); set => Set(value); }
+	public bool EscapeAllIdentifiers { get; set; }
 
 	/// <summary>
 	/// Gets the keywords.
@@ -30,13 +29,13 @@ public abstract class Generator : ModelBase
 	/// If true, identifiers will be converted into snake_case.
 	/// An underscore will be added between each lowercase-uppercase pair, then all uppercases will be converted into lowercase.
 	/// </summary>
-	public bool SnakeCase { get => Get<bool>(); set => Set(value); }
+	public bool SnakeCase { get; set; }
 
 	/// <summary>
 	/// Gets or sets the number of spaced to use per logical tab. If null, an actual tab will be used.
 	/// </summary>
 	/// <value>The size of the tab.</value>
-	public int? TabSize { get => Get<int?>(); set => Set(value); }
+	public int? TabSize { get; set; }
 
 	/// <summary>
 	/// Builds the table.
@@ -203,7 +202,7 @@ public abstract class Generator : ModelBase
 	/// <param name="table">The table.</param>
 	/// <returns>List&lt;ValidationResult&gt;.</returns>
 	/// <exception cref="ArgumentNullException">table</exception>
-	public virtual List<ValidationResult> ValidateTable(Table table)
+	public virtual List<ValidationResult> Validate(Table table)
 	{
 		if (table == null)
 			throw new ArgumentNullException(nameof(table), $"{nameof(table)} is null.");

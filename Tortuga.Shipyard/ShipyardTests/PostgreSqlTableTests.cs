@@ -12,7 +12,7 @@ public sealed partial class PostgreSqlTableTests : TestsBase
 	{
 		var table = new Table("dbo", "foo");
 		var generator = new PostgreSqlGenerator();
-		var results = generator.ValidateTable(table);
+		var results = generator.Validate(table);
 		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "Columns")));
 	}
 

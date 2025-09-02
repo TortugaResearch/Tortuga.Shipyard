@@ -50,89 +50,95 @@ partial class Column : ModelBase
 		IsNullable = isNullable;
 	}
 
+
 	/// <summary>
-	/// Gets the full SQL Server type of the column, including length, precision, and scale as appropriate.
+	/// Gets the SqlDbType for PostgreSQL, converting from DbType if necessary.
 	/// </summary>
-	/// <value>The full type of the SQL server.</value>
-	public string PostgreSqlFullType
+
+	public NpgsqlDbType CalculatePostgreSqlType()
 	{
-		get
+		return PostgreSqlType ?? Type switch
 		{
-			if (PostgreSqlOverride != null)
-				return PostgreSqlOverride;
+			DbType.AnsiString => NpgsqlDbType.Char,
+			DbType.AnsiStringFixedLength => NpgsqlDbType.Char,
+			DbType.Binary => NpgsqlDbType.Bytea,
+			DbType.Boolean => NpgsqlDbType.Bit,
+			DbType.Byte => NpgsqlDbType.Bytea,
+			DbType.Currency => NpgsqlDbType.Money,
+			DbType.Date => NpgsqlDbType.Date,
+			DbType.DateTime => NpgsqlDbType.Timestamp,
+			DbType.DateTime2 => NpgsqlDbType.Timestamp,
+			DbType.DateTimeOffset => NpgsqlDbType.TimestampTz,
+			DbType.Decimal => NpgsqlDbType.Numeric,
+			DbType.Double => NpgsqlDbType.Double,
+			DbType.Guid => NpgsqlDbType.Uuid,
+			DbType.Int16 => NpgsqlDbType.Smallint,
+			DbType.Int32 => NpgsqlDbType.Integer,
+			DbType.Int64 => NpgsqlDbType.Bigint,
+			//DbType.Object => NpgsqlDbType,
+			//DbType.SByte => System.Data.NpgsqlDbType  ,
+			DbType.Single => NpgsqlDbType.Real,
+			DbType.String => NpgsqlDbType.Varchar,
+			DbType.StringFixedLength => NpgsqlDbType.Char,
+			DbType.Time => NpgsqlDbType.Time,
+			//DbType.UInt16 => System.Data.NpgsqlDbType  ,
+			//DbType.UInt32 => System.Data.NpgsqlDbType  ,
+			//DbType.UInt64 => System.Data.NpgsqlDbType  ,
+			DbType.VarNumeric => NpgsqlDbType.Numeric,
+			DbType.Xml => NpgsqlDbType.Xml,
 
-			var typeCode = PostgreSqlType;
+			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
 
-			typeCode ??= Type switch
-			{
-				DbType.AnsiString => NpgsqlDbType.Char,
-				DbType.AnsiStringFixedLength => NpgsqlDbType.Char,
-				DbType.Binary => NpgsqlDbType.Bytea,
-				DbType.Boolean => NpgsqlDbType.Bit,
-				DbType.Byte => NpgsqlDbType.Bytea,
-				DbType.Currency => NpgsqlDbType.Money,
-				DbType.Date => NpgsqlDbType.Date,
-				DbType.DateTime => NpgsqlDbType.Timestamp,
-				DbType.DateTime2 => NpgsqlDbType.Timestamp,
-				DbType.DateTimeOffset => NpgsqlDbType.TimestampTz,
-				DbType.Decimal => NpgsqlDbType.Numeric,
-				DbType.Double => NpgsqlDbType.Double,
-				DbType.Guid => NpgsqlDbType.Uuid,
-				DbType.Int16 => NpgsqlDbType.Smallint,
-				DbType.Int32 => NpgsqlDbType.Integer,
-				DbType.Int64 => NpgsqlDbType.Bigint,
-				//DbType.Object => NpgsqlDbType,
-				//DbType.SByte => System.Data.NpgsqlDbType  ,
-				DbType.Single => NpgsqlDbType.Real,
-				DbType.String => NpgsqlDbType.Varchar,
-				DbType.StringFixedLength => NpgsqlDbType.Char,
-				DbType.Time => NpgsqlDbType.Time,
-				//DbType.UInt16 => System.Data.NpgsqlDbType  ,
-				//DbType.UInt32 => System.Data.NpgsqlDbType  ,
-				//DbType.UInt64 => System.Data.NpgsqlDbType  ,
-				DbType.VarNumeric => NpgsqlDbType.Numeric,
-				DbType.Xml => NpgsqlDbType.Xml,
+		};
+	}
 
-				_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
-			};
+	/// <summary>
+	/// Gets the full PostgreSQL type of the column, including length, precision, and scale as appropriate.
+	/// </summary>
+	/// <returns>The full type of the SQL server.</returns>
+	public string CalculatePostgreSqlFullType()
+	{
+		if (PostgreSqlOverride != null)
+			return PostgreSqlOverride;
 
-			return typeCode switch
-			{
-				NpgsqlDbType.Bigint =>
-					IsIdentity ? "bigserial" :
-					$"bigint",
-				NpgsqlDbType.Bytea => $"bytea",
-				NpgsqlDbType.Bit => $"bit",
-				NpgsqlDbType.Char => $"char({MaxLength})",
-				NpgsqlDbType.Date => $"date",
-				NpgsqlDbType.TimestampTz =>
-					Precision.HasValue ? $"timestamp({Precision}) with time zone" :
-					$"timestamp with time zone",
-				NpgsqlDbType.Numeric =>
-					Precision.HasValue && Scale.HasValue ? $"numeric({Precision},{Scale})" :
-					Precision.HasValue ? $"numeric({Precision})" :
-					$"numeric()",
-				NpgsqlDbType.Double => $"double precision",
-				NpgsqlDbType.Integer =>
-					IsIdentity ? "serial" :
-					$"integer",
-				NpgsqlDbType.Json => $"json",
-				NpgsqlDbType.Jsonb => $"jsonb",
-				NpgsqlDbType.Money => $"money",
-				NpgsqlDbType.Real => $"real",
-				NpgsqlDbType.Smallint => $"smallint",
-				NpgsqlDbType.Text => $"text",
-				NpgsqlDbType.Time => $"time",
-				NpgsqlDbType.Timestamp =>
-					Precision.HasValue ? $"timestamp({Precision})" :
-					$"timestamp",
-				NpgsqlDbType.Uuid => $"uuid",
-				NpgsqlDbType.Varchar => $"varchar({(MaxLength > 10485760 ? 10485760 : MaxLength)})",
-				NpgsqlDbType.Xml => $"xml",
+		var typeCode = CalculatePostgreSqlType();
 
-				_ => throw new NotSupportedException($"Uknown NpgsqlDbType '{typeCode}'")
-			};
-		}
+		return typeCode switch
+		{
+			NpgsqlDbType.Bigint =>
+				IsIdentity ? "bigserial" :
+				$"bigint",
+			NpgsqlDbType.Bytea => $"bytea",
+			NpgsqlDbType.Bit => $"bit",
+			NpgsqlDbType.Char => $"char({MaxLength})",
+			NpgsqlDbType.Date => $"date",
+			NpgsqlDbType.TimestampTz =>
+				Precision.HasValue ? $"timestamp({Precision}) with time zone" :
+				$"timestamp with time zone",
+			NpgsqlDbType.Numeric =>
+				Precision.HasValue && Scale.HasValue ? $"numeric({Precision},{Scale})" :
+				Precision.HasValue ? $"numeric({Precision})" :
+				$"numeric()",
+			NpgsqlDbType.Double => $"double precision",
+			NpgsqlDbType.Integer =>
+				IsIdentity ? "serial" :
+				$"integer",
+			NpgsqlDbType.Json => $"json",
+			NpgsqlDbType.Jsonb => $"jsonb",
+			NpgsqlDbType.Money => $"money",
+			NpgsqlDbType.Real => $"real",
+			NpgsqlDbType.Smallint => $"smallint",
+			NpgsqlDbType.Text => $"text",
+			NpgsqlDbType.Time => $"time",
+			NpgsqlDbType.Timestamp =>
+				Precision.HasValue ? $"timestamp({Precision})" :
+				$"timestamp",
+			NpgsqlDbType.Uuid => $"uuid",
+			NpgsqlDbType.Varchar => $"varchar({(MaxLength > 10485760 ? 10485760 : MaxLength)})",
+			NpgsqlDbType.Xml => $"xml",
+
+			_ => throw new NotSupportedException($"Uknown NpgsqlDbType '{typeCode}'")
+		};
 	}
 
 	/// <summary>

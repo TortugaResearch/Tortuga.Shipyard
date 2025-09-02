@@ -13,8 +13,29 @@ public sealed partial class SqlServerTableTests : TestsBase
 	{
 		var table = new Table("dbo", "foo");
 		var generator = new SqlServerGenerator();
-		var results = generator.ValidateTable(table);
+		var results = generator.Validate(table);
 		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "Columns")));
+	}
+
+
+	[TestMethod]
+	public void Identify_Type_Test()
+	{
+		var table = new Table("dbo", "foo");
+		table.Columns.Add(new("Test", DbType.Int32) { IsIdentity = true });
+		var generator = new SqlServerGenerator();
+		var results = generator.Validate(table);
+		Assert.IsTrue(results.Count == 0);
+	}
+
+	[TestMethod]
+	public void Identify_Type_Fail_Test()
+	{
+		var table = new Table("dbo", "foo");
+		table.Columns.Add(new("Test", DbType.String) { IsIdentity = true });
+		var generator = new SqlServerGenerator();
+		var results = generator.Validate(table);
+		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "IsIdentity")));
 	}
 
 	[TestMethod]
