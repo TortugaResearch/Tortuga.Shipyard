@@ -231,9 +231,9 @@ GO
 		table.Columns.Add(new("WireEnabledIndicator", DbType.Int16, true));
 		table.Columns.Add(new("IndChgsLastModifiedDateTime", DbType.DateTime2, 6, true));
 		table.Columns.Add(new("IndChgsLastModifiedByUserId", DbType.String, 8, true));
-		table.Columns.Add(new("AddressKey", DbType.Int32, true) { FKTableName = "Address", FKColumnName = "AddressKey" });
-		table.Columns.Add(new("NameKey", DbType.Int32) { FKTableName = "Name", FKColumnName = "NameKey" });
-		table.Columns.Add(new("NotePadKey", DbType.Int32) { FKTableName = "NotePad", FKColumnName = "NotePadKey" });
+		table.Columns.Add(new("AddressKey", DbType.Int32, true) { ReferencedTable = "Address", ReferencedColumn = "AddressKey" });
+		table.Columns.Add(new("NameKey", DbType.Int32) { ReferencedTable = "Name", ReferencedColumn = "NameKey" });
+		table.Columns.Add(new("NotePadKey", DbType.Int32) { ReferencedTable = "NotePad", ReferencedColumn = "NotePadKey" });
 		table.Columns.Add(new("LastImportRunId", DbType.Guid));
 		table.Columns.Add(new("LastImportDateTime", DbType.DateTime2, 7));
 

@@ -92,7 +92,7 @@ public sealed partial class PostgreSqlTableTests : TestsBase
 		table.Columns.Add(new("MiddleName", NpgsqlDbType.Varchar, 50, true));
 		table.Columns.Add(new("LastName", NpgsqlDbType.Varchar, 50));
 		table.Columns.Add(new("Title", NpgsqlDbType.Varchar, 100, true));
-		table.Columns.Add(new("ManagerKey", NpgsqlDbType.Integer, true) { FKSchemaName = "HR", FKTableName = "Employee", FKColumnName = "EmployeeKey" });
+		table.Columns.Add(new("ManagerKey", NpgsqlDbType.Integer, true) { ReferencedSchema = "HR", ReferencedTable = "Employee", ReferencedColumn = "EmployeeKey" });
 		table.Columns.Add(new("OfficePhone", NpgsqlDbType.Varchar, 15, true));
 		table.Columns.Add(new("CellPhone", NpgsqlDbType.Varchar, 15, true));
 		table.Columns.Add(new("CreatedDate", NpgsqlDbType.Timestamp) { Default = "CURRENT_TIMESTAMP" });

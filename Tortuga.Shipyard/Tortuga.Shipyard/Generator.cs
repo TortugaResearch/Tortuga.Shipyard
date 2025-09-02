@@ -2,6 +2,7 @@
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using Tortuga.Anchor;
 using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
@@ -44,12 +45,36 @@ public abstract class Generator : ModelBase
 	/// <returns>System.String.</returns>
 	public abstract string BuildTable(Table table);
 
+	public IEnumerable<string> BuildTables(IEnumerable<Table> tables)
+	{
+		if (tables == null)
+			throw new ArgumentNullException(nameof(tables), $"{nameof(tables)} is null.");
+
+		foreach (var item in tables)
+			yield return BuildTable(item);
+	}
+
 	/// <summary>
 	/// Generates the SQL statement for creating the specified view.
 	/// </summary>
 	/// <param name="view">The view to generate SQL for.</param>
 	/// <returns>The SQL CREATE VIEW statement.</returns>
 	public abstract string BuildView(View view);
+
+	/// <summary>
+	/// Builds the views.
+	/// </summary>
+	/// <param name="views">The views.</param>
+	/// <returns>IEnumerable&lt;System.String&gt;.</returns>
+	/// <exception cref="System.ArgumentNullException">views</exception>
+	public IEnumerable<string> BuildViews(IEnumerable<View> views)
+	{
+		if (views == null)
+			throw new ArgumentNullException(nameof(views), $"{nameof(views)} is null.");
+
+		foreach (var item in views)
+			yield return BuildView(item);
+	}
 
 	/// <summary>
 	/// Calculates and assigns aliases for sources in the specified view.
@@ -60,7 +85,7 @@ public abstract class Generator : ModelBase
 		if (view == null)
 			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
 
-		foreach (var source in view.Sources.Where(v => v.Alias == null))
+		foreach (var source in view.Sources.Where(v => v.Alias.IsNullOrEmpty()))
 		{
 			// Convert baseAlias to a string
 			var baseAlias = new string(source.TableOrViewName!.Where(c => char.IsUpper(c)).Select(c => char.ToLower(c, CultureInfo.InvariantCulture)).ToArray());
@@ -76,6 +101,34 @@ public abstract class Generator : ModelBase
 			}
 			source.Alias = alias;
 		}
+	}
+
+	/// <summary>
+	/// Calculates the aliases.
+	/// </summary>
+	/// <param name="views">The views.</param>
+	/// <exception cref="System.ArgumentNullException">views</exception>
+	public void CalculateAliases(IEnumerable<View> views)
+	{
+		if (views == null)
+			throw new ArgumentNullException(nameof(views), $"{nameof(views)} is null.");
+
+		foreach (var item in views)
+			CalculateAliases(item);
+	}
+
+	/// <summary>
+	/// Calculates the join expressions.
+	/// </summary>
+	/// <param name="views">The views.</param>
+	/// <exception cref="System.ArgumentNullException">views</exception>
+	public void CalculateJoinExpressions(IEnumerable<View> views)
+	{
+		if (views == null)
+			throw new ArgumentNullException(nameof(views), $"{nameof(views)} is null.");
+
+		foreach (var view in views)
+			CalculateJoinExpressions(view);
 	}
 
 	/// <summary>
@@ -121,10 +174,7 @@ public abstract class Generator : ModelBase
 	[return: NotNullIfNotNull(nameof(text))]
 	public virtual string? EscapeTextUnicode(string? text)
 	{
-		if (text == null)
-			return null;
-
-		return "N'" + text.Replace("'", "''", StringComparison.InvariantCulture) + "'";
+		return EscapeText(text); //Default to only one style of string.
 	}
 
 	/// <summary>
@@ -132,6 +182,20 @@ public abstract class Generator : ModelBase
 	/// </summary>
 	/// <param name="table">The table.</param>
 	public abstract void NameConstraints(Table table);
+
+	/// <summary>
+	/// Names the constraints.
+	/// </summary>
+	/// <param name="tables">The tables.</param>
+	/// <exception cref="System.ArgumentNullException">tables</exception>
+	public void NameConstraints(IEnumerable<Table> tables)
+	{
+		if (tables == null)
+			throw new ArgumentNullException(nameof(tables), $"{nameof(tables)} is null.");
+
+		foreach (var item in tables)
+			NameConstraints(item);
+	}
 
 	/// <summary>
 	/// Validates the table.

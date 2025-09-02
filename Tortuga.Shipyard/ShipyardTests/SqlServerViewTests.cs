@@ -334,9 +334,9 @@ LEFT JOIN a
 		result.Columns.Add(new("WireEnabledIndicator", DbType.Int16, true));
 		result.Columns.Add(new("IndChgsLastModifiedDateTime", DbType.DateTime2, 6, true));
 		result.Columns.Add(new("IndChgsLastModifiedByUserId", DbType.String, 8, true));
-		result.Columns.Add(new("AddressKey", DbType.Int32, true) { FKTableName = "Address", FKColumnName = "AddressKey" });
-		result.Columns.Add(new("NameKey", DbType.Int32) { FKTableName = "Name", FKColumnName = "NameKey" });
-		result.Columns.Add(new("NotePadKey", DbType.Int32) { FKTableName = "NotePad", FKColumnName = "NotePadKey" });
+		result.Columns.Add(new("AddressKey", DbType.Int32, true) { ReferencedTable = "Address", ReferencedColumn = "AddressKey" });
+		result.Columns.Add(new("NameKey", DbType.Int32) { ReferencedTable = "Name", ReferencedColumn = "NameKey" });
+		result.Columns.Add(new("NotePadKey", DbType.Int32) { ReferencedTable = "NotePad", ReferencedColumn = "NotePadKey" });
 		result.Columns.Add(new("LastImportRunId", DbType.Guid));
 		result.Columns.Add(new("LastImportDateTime", DbType.DateTime2, 7));
 		return result;

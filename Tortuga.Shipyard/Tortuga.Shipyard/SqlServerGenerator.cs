@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using Tortuga.Anchor;
@@ -71,7 +72,7 @@ public class SqlServerGenerator : Generator
 
 			if (column.IsPrimaryKey && !table.HasCompoundPrimaryKey)
 			{
-				if (table.PrimaryKeyConstraintName != null)
+				if (!table.PrimaryKeyConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {table.PrimaryKeyConstraintName}");
 				output.Append(" PRIMARY KEY");
 				if (table.ClusteredIndex != null)
@@ -80,30 +81,30 @@ public class SqlServerGenerator : Generator
 
 			if (column.IsUnique)
 			{
-				if (column.UniqueConstraintName != null)
+				if (!column.UniqueConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.UniqueConstraintName}");
 				output.Append(" UNIQUE");
 			}
 
-			if (column.Default != null)
+			if (!column.Default.IsNullOrEmpty())
 			{
-				if (column.DefaultConstraintName != null)
+				if (!column.DefaultConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.DefaultConstraintName}");
 				output.Append($" DEFAULT {column.Default}");
 			}
 
-			if (column.Check != null)
+			if (!column.Check.IsNullOrEmpty())
 			{
-				if (column.CheckConstraintName != null)
+				if (!column.CheckConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.CheckConstraintName}");
 				output.Append($" CHECK {column.Check}");
 			}
 
-			if (column.FKColumnName != null)
+			if (!column.ReferencedColumn.IsNullOrEmpty())
 			{
-				if (column.FKConstraintName != null)
+				if (!column.FKConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.FKConstraintName}");
-				output.Append($" REFERENCES {EscapeIdentifier(column.FKSchemaName ?? table.SchemaName)}.{EscapeIdentifier(column.FKTableName)}({EscapeIdentifier(column.FKColumnName)})");
+				output.Append($" REFERENCES {EscapeIdentifier(column.ReferencedSchema ?? table.SchemaName)}.{EscapeIdentifier(column.ReferencedTable)}({EscapeIdentifier(column.ReferencedColumn)})");
 			}
 
 			output.AppendLine(",");
@@ -112,7 +113,7 @@ public class SqlServerGenerator : Generator
 		if (table.HasCompoundPrimaryKey)
 		{
 			output.Append('\t');
-			if (table.PrimaryKeyConstraintName != null)
+			if (!table.PrimaryKeyConstraintName.IsNullOrEmpty())
 				output.Append($"CONSTRAINT {table.PrimaryKeyConstraintName} ");
 			output.AppendLine($"PRIMARY KEY ({string.Join(",", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
 		}
@@ -151,7 +152,7 @@ public class SqlServerGenerator : Generator
 			EndBatch(output);
 		}
 
-		if (table.Description != null)
+		if (!table.Description.IsNullOrEmpty())
 		{
 			output.AppendLine($"EXEC sp_addextendedproperty @name = N'MS_Description', @value = {EscapeTextUnicode(table.Description)}, @level0type = N'SCHEMA', @level0name = N'{table.SchemaName}', @level1type = N'TABLE', @level1name = N'{table.TableName}', @level2type = NULL, @level2name = NULL;");
 			EndBatch(output);
@@ -159,7 +160,7 @@ public class SqlServerGenerator : Generator
 
 		foreach (var column in table.Columns)
 		{
-			if (column.Description != null)
+			if (!column.Description.IsNullOrEmpty())
 			{
 				output.AppendLine($"EXEC sp_addextendedproperty @name = N'MS_Description', @value = {EscapeTextUnicode(column.Description)}, @level0type = N'SCHEMA', @level0name = N'{table.SchemaName}', @level1type = N'TABLE', @level1name = N'{table.TableName}', @level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
 				EndBatch(output);
@@ -189,7 +190,7 @@ public class SqlServerGenerator : Generator
 		{
 			foreach (var outputColumn in source.Outputs)
 			{
-				if (outputColumn.Expression != null)
+				if (!outputColumn.Expression.IsNullOrEmpty())
 					output.AppendLine($"\t{string.Format(outputColumn.Expression, EscapeIdentifier(source.Alias ?? source.TableOrViewName))} AS {EscapeIdentifier(outputColumn.ColumnName)},");
 				else
 					output.AppendLine($"\t{EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(outputColumn.ColumnName)},");
@@ -228,7 +229,7 @@ public class SqlServerGenerator : Generator
 		if (view == null)
 			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
 
-		foreach (var source in view.Sources.Where(v => v.Alias == null))
+		foreach (var source in view.Sources.Where(v => v.Alias.IsNullOrEmpty()))
 		{
 			// Convert baseAlias to a string
 			var baseAlias = new string(source.TableOrViewName!.Where(c => char.IsUpper(c)).Select(c => char.ToLower(c, CultureInfo.InvariantCulture)).ToArray());
@@ -251,7 +252,7 @@ public class SqlServerGenerator : Generator
 		if (view == null)
 			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
 
-		foreach (var source in view.Sources.OfType<JoinedViewSource>().Where(v => v.JoinExpression == null))
+		foreach (var source in view.Sources.OfType<JoinedViewSource>().Where(v => v.JoinExpression.IsNullOrEmpty()))
 		{
 			var express = new List<string>();
 			for (int i = 0; i < source.LeftJoinColumns.Count; i++)
@@ -266,6 +267,19 @@ public class SqlServerGenerator : Generator
 	}
 
 	/// <summary>
+	/// Escapes text for use as a string in SQL.
+	/// </summary>
+	/// <param name="text">The text.</param>
+	[return: NotNullIfNotNull(nameof(text))]
+	public override string? EscapeTextUnicode(string? text)
+	{
+		if (text == null)
+			return null;
+
+		return "N'" + text.Replace("'", "''", StringComparison.InvariantCulture) + "'";
+	}
+
+	/// <summary>
 	/// Names the constraints.
 	/// </summary>
 	/// <param name="table">The table.</param>
@@ -277,24 +291,24 @@ public class SqlServerGenerator : Generator
 
 		var schemaPart = IncludeSchemaNameInConstraintNames ? $"{table.SchemaName}_" : "";
 
-		if (table.PrimaryKeyConstraintName == null && table.Columns.Any(c => c.IsPrimaryKey))
+		if (table.PrimaryKeyConstraintName.IsNullOrEmpty() && table.Columns.Any(c => c.IsPrimaryKey))
 			table.PrimaryKeyConstraintName = $"PK_{schemaPart}{table.TableName}";
 
-		if (table.ClusteredIndex != null && table.ClusteredIndex.IndexName == null)
+		if (table.ClusteredIndex != null && table.ClusteredIndex.IndexName.IsNullOrEmpty())
 			table.ClusteredIndex.IndexName = $"CX_{schemaPart}{table.TableName}";
 
 		foreach (var column in table.Columns)
 		{
-			if (column.DefaultConstraintName == null && column.Default != null)
+			if (column.DefaultConstraintName.IsNullOrEmpty() && !column.Default.IsNullOrEmpty())
 				column.DefaultConstraintName = $"D_{column.ColumnName}";
 
-			if (column.CheckConstraintName == null && column.Default != null)
+			if (column.CheckConstraintName.IsNullOrEmpty() && !column.Check.IsNullOrEmpty())
 				column.CheckConstraintName = $"C_{column.ColumnName}";
 
-			if (column.UniqueConstraintName == null && column.IsUnique)
+			if (column.UniqueConstraintName.IsNullOrEmpty() && column.IsUnique)
 				column.UniqueConstraintName = $"UX_{column.ColumnName}";
 
-			if (column.FKConstraintName == null && column.FKColumnName != null)
+			if (column.FKConstraintName.IsNullOrEmpty() && !column.ReferencedColumn.IsNullOrEmpty())
 				column.FKConstraintName = $"FK_{schemaPart}{table.TableName}_{column.ColumnName}";
 		}
 	}
@@ -306,10 +320,17 @@ public class SqlServerGenerator : Generator
 	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
 	protected override string? EscapeIdentifier(string? identifier)
 	{
-		if (identifier == null)
-			return null;
+		if (identifier.IsNullOrEmpty())
+			return identifier;
 
-		if (EscapeAllIdentifiers || Keywords.Contains(identifier))
+		if (EscapeAllIdentifiers
+				|| Keywords.Contains(identifier)
+				|| Keywords.Contains(identifier)
+				|| identifier.Contains('.', StringComparison.Ordinal)
+				|| identifier.Contains('-', StringComparison.Ordinal)
+				|| identifier.Contains(' ', StringComparison.Ordinal)
+				|| char.IsNumber(identifier[0])
+			)
 			return '[' + identifier + ']';
 		else
 			return identifier;

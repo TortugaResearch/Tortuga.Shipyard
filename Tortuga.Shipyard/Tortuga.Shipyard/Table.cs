@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Tortuga.Anchor;
 using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
@@ -41,6 +42,12 @@ public class Table : ModelBase
 	/// </summary>
 	/// <value><c>true</c> if this instance has compound primary key; otherwise, <c>false</c>.</value>
 	public bool HasCompoundPrimaryKey => Columns.Count(c => c.IsPrimaryKey) > 1;
+
+	/// <summary>
+	/// Gets a value indicating whether this table has any foreign key constraints.
+	/// </summary>
+	/// <value><c>true</c> if this instance has foreign key constraints; otherwise, <c>false</c>.</value>
+	public bool HasForeignKeyConstraints => Columns.Any(c => !c.ReferencedColumn.IsNullOrEmpty());
 
 	/// <summary>
 	/// Gets the collection of indexes defined on the table.
@@ -89,5 +96,10 @@ public class Table : ModelBase
 		result.Sources.Add(source);
 
 		return result;
+	}
+
+	public bool ReferencesTable(Table t)
+	{
+		return Columns.Any(c => t.SchemaName == c.ReferencedSchema && t.TableName == c.ReferencedTable);
 	}
 }

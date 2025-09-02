@@ -70,21 +70,21 @@ public class PostgreSqlGenerator : Generator
 
 			if (column.IsUnique)
 			{
-				if (column.UniqueConstraintName != null)
+				if (!column.UniqueConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.UniqueConstraintName}");
 				output.Append(" UNIQUE");
 			}
 
-			if (column.Default != null)
+			if (!column.Default.IsNullOrEmpty())
 			{
-				if (column.DefaultConstraintName != null)
+				if (!column.DefaultConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.DefaultConstraintName}");
 				output.Append($" DEFAULT {column.Default}");
 			}
 
-			if (column.Check != null)
+			if (!column.Check.IsNullOrEmpty())
 			{
-				if (column.CheckConstraintName != null)
+				if (!column.CheckConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.CheckConstraintName}");
 				output.Append($" CHECK {column.Check}");
 			}
@@ -102,19 +102,19 @@ public class PostgreSqlGenerator : Generator
 		if (table.Columns.Any(c => c.IsPrimaryKey))
 		{
 			output.Append('\t');
-			if (table.PrimaryKeyConstraintName != null)
+			if (!table.PrimaryKeyConstraintName.IsNullOrEmpty())
 				output.Append($"CONSTRAINT {table.PrimaryKeyConstraintName} ");
 			output.AppendLine($"PRIMARY KEY ({string.Join(",", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
 		}
 
 		foreach (var column in table.Columns)
 		{
-			if (column.FKColumnName != null)
+			if (!column.ReferencedColumn.IsNullOrEmpty())
 			{
 				output.Append('\t');
-				if (column.FKConstraintName != null)
+				if (!column.FKConstraintName.IsNullOrEmpty())
 					output.Append($"CONSTRAINT {column.FKConstraintName} ");
-				output.AppendLine($"FOREIGN KEY ({EscapeIdentifier(column.ColumnName)}) REFERENCES {EscapeIdentifier(column.FKSchemaName ?? table.SchemaName)}.{EscapeIdentifier(column.FKTableName)}({EscapeIdentifier(column.FKColumnName)}),");
+				output.AppendLine($"FOREIGN KEY ({EscapeIdentifier(column.ColumnName)}) REFERENCES {EscapeIdentifier(column.ReferencedSchema ?? table.SchemaName)}.{EscapeIdentifier(column.ReferencedTable)}({EscapeIdentifier(column.ReferencedColumn)}),");
 			}
 		}
 
@@ -195,7 +195,7 @@ public class PostgreSqlGenerator : Generator
 		{
 			foreach (var outputColumn in source.Outputs)
 			{
-				if (outputColumn.Expression != null)
+				if (!outputColumn.Expression.IsNullOrEmpty())
 					output.AppendLine($"\t{string.Format(outputColumn.Expression, EscapeIdentifier(source.Alias ?? source.TableOrViewName))} AS {EscapeIdentifier(outputColumn.ColumnName)},");
 				else
 					output.AppendLine($"\t{EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(outputColumn.ColumnName)},");
@@ -239,14 +239,16 @@ public class PostgreSqlGenerator : Generator
 		if (table == null)
 			throw new ArgumentNullException(nameof(table), $"{nameof(table)} is null.");
 
+		string? LimitSize(string name) => name.Length < 64 ? name : null;
+
 		var schemaPart = IncludeSchemaNameInConstraintNames ? $"{SnakeCaseIdentifier(table.SchemaName)}_" : "";
 		var tablePart = SnakeCaseIdentifier(table.TableName);
 
-		if (table.PrimaryKeyConstraintName == null && table.Columns.Any(c => c.IsPrimaryKey))
-			table.PrimaryKeyConstraintName = $"{schemaPart}{tablePart}_pkey";
+		if (table.PrimaryKeyConstraintName.IsNullOrEmpty() && table.Columns.Any(c => c.IsPrimaryKey))
+			table.PrimaryKeyConstraintName = LimitSize($"{schemaPart}{tablePart}_pkey");
 
-		if (table.ClusteredIndex != null && table.ClusteredIndex.IndexName == null)
-			table.ClusteredIndex.IndexName = $"CX{schemaPart}{tablePart}";
+		if (table.ClusteredIndex != null && table.ClusteredIndex.IndexName.IsNullOrEmpty())
+			table.ClusteredIndex.IndexName = LimitSize($"{schemaPart}{tablePart}_ckey");
 
 		//ref: https://stackoverflow.com/questions/4107915/postgresql-default-constraint-names
 		foreach (var column in table.Columns)
@@ -256,14 +258,14 @@ public class PostgreSqlGenerator : Generator
 			//if (column.DefaultConstraintName == null && column.Default != null)
 			//	column.DefaultConstraintName = $"D_{columnPart}";
 
-			if (column.CheckConstraintName == null && column.Default != null)
-				column.CheckConstraintName = $"C_{columnPart}";
+			if (column.CheckConstraintName.IsNullOrEmpty() && !column.Default.IsNullOrEmpty())
+				column.CheckConstraintName = LimitSize($"{schemaPart}{tablePart}_{columnPart}_check");
 
-			if (column.UniqueConstraintName == null && column.IsUnique)
-				column.UniqueConstraintName = $"UX_{columnPart}";
+			if (column.UniqueConstraintName.IsNullOrEmpty() && column.IsUnique)
+				column.UniqueConstraintName = LimitSize($"{schemaPart}{tablePart}_{columnPart}_key");
 
-			if (column.FKConstraintName == null && column.FKColumnName != null)
-				column.FKConstraintName = $"{schemaPart}{tablePart}_{columnPart}_fkey";
+			if (column.FKConstraintName.IsNullOrEmpty() && !column.ReferencedColumn.IsNullOrEmpty())
+				column.FKConstraintName = LimitSize($"{schemaPart}{tablePart}_{columnPart}_fkey");
 		}
 	}
 
@@ -275,12 +277,18 @@ public class PostgreSqlGenerator : Generator
 	[return: NotNullIfNotNull(nameof(identifier))]
 	protected override string? EscapeIdentifier(string? identifier)
 	{
-		if (identifier == null || identifier.Length == 0)
+		if (identifier.IsNullOrEmpty())
 			return identifier;
 
 		var result = SnakeCaseIdentifier(identifier);
 
-		if (EscapeAllIdentifiers || Keywords.Contains(result))
+		if (EscapeAllIdentifiers
+				|| Keywords.Contains(result)
+				|| result.Contains('.', StringComparison.Ordinal)
+				|| result.Contains('-', StringComparison.Ordinal)
+				|| result.Contains(' ', StringComparison.Ordinal)
+				|| char.IsNumber(result[0])
+			)
 			return '"' + result + '"';
 		else
 			return result;
