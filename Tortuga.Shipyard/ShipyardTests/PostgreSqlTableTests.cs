@@ -76,7 +76,7 @@ public sealed partial class PostgreSqlTableTests : TestsBase
 		var table = CreateEmployeeTable();
 
 		var generator = new PostgreSqlGenerator();
-		generator.SnakeCase = true;
+		generator.UseSnakeCase = true;
 		generator.NameConstraints(table);
 		var output = generator.BuildTable(table);
 

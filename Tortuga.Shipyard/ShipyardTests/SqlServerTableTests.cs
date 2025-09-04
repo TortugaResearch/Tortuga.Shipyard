@@ -128,7 +128,7 @@ GO
 		table.Columns.Add(new("EmailAddress", DbType.String, 40, true));
 		table.Columns.Add(new("State", DbType.Int32, true));
 		table.Columns.Add(new("TimeZone", DbType.Int16, true));
-		table.Columns.Add(new("WebAddress", DbType.String, 40, true));
+		table.Columns.Add(new("WebAddress", DbType.String, 40, true) { IsUnique = true });
 		table.Columns.Add(new("ZipCode", DbType.String, 12, true));
 		table.Columns.Add(new("IndChgsLastModifiedDateTime", DbType.DateTime2, 6, true));
 		table.Columns.Add(new("IndChgsLastModifiedByUserId", DbType.String, 8, true));
@@ -140,8 +140,8 @@ GO
 		generator.UseBatchSeperator = true;
 		var output = generator.BuildTable(table);
 
-		CompareOutput(expected, output);
 		Debug.WriteLine(output);
+		CompareOutput(expected, output);
 	}
 
 	[TestMethod]

@@ -83,7 +83,7 @@ public class SqlServerGenerator : Generator
 					output.Append(" NONCLUSTERED");
 			}
 
-			if (column.IsUnique)
+			if (column.IsUnique && !column.IsNullable)
 			{
 				if (!column.UniqueConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.UniqueConstraintName}");
@@ -135,6 +135,15 @@ public class SqlServerGenerator : Generator
 			output.AppendLine($"CREATE CLUSTERED INDEX {table.ClusteredIndex.IndexName} ON {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)} ({string.Join(", ", table.ClusteredIndex.OrderedColumns.Select(c => EscapeIdentifier(c)))});");
 			EndBatch(output);
 		}
+
+		foreach (var column in table.Columns.Where(c => c.IsUnique && c.IsNullable))
+		{
+			output.AppendLine($"CREATE UNIQUE INDEX {column.UniqueConstraintName} ON {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)}({EscapeIdentifier(column.ColumnName)}) WHERE {EscapeIdentifier(column.ColumnName)} IS NOT NULL;");
+			EndBatch(output);
+		}
+		//TODO: Support nullable unique columns 
+		/*
+		*/
 
 		foreach (var index in table.Indexes.Where(c => c.IsConstraint))
 		{
@@ -340,7 +349,7 @@ public class SqlServerGenerator : Generator
 	/// <param name="identifier">The identifier.</param>
 	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
 	[return: NotNullIfNotNull(nameof(identifier))]
-	protected override string? EscapeIdentifier(string? identifier)
+	public override string? EscapeIdentifier(string? identifier)
 	{
 		if (identifier.IsNullOrEmpty())
 			return identifier;

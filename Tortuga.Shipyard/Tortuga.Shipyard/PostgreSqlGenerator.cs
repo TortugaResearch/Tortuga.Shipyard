@@ -275,7 +275,7 @@ public class PostgreSqlGenerator : Generator
 	/// <param name="identifier">The identifier.</param>
 	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
 	[return: NotNullIfNotNull(nameof(identifier))]
-	protected override string? EscapeIdentifier(string? identifier)
+	public override string? EscapeIdentifier(string? identifier)
 	{
 		if (identifier.IsNullOrEmpty())
 			return identifier;
@@ -300,13 +300,13 @@ public class PostgreSqlGenerator : Generator
 	}
 
 	[return: NotNullIfNotNull(nameof(identifier))]
-	string? SnakeCaseIdentifier(string? identifier)
+	public string? SnakeCaseIdentifier(string? identifier)
 	{
 		if (identifier == null || identifier.Length == 0)
 			return identifier;
 
 		string result;
-		if (SnakeCase)
+		if (UseSnakeCase)
 		{
 			result = char.ToLowerInvariant(identifier[0]).ToString();
 			for (int i = 1; i < identifier.Length; i++)
