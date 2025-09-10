@@ -171,6 +171,12 @@ public class SqlServerGenerator : Generator
 			EndBatch(output);
 		}
 
+		foreach (var property in table.Properties)
+		{
+			output.AppendLine($"EXEC sp_addextendedproperty @name = N'{property.Name}', @value = {EscapeTextUnicode(property.Value)}, @level0type = N'SCHEMA', @level0name = N'{table.SchemaName}', @level1type = N'TABLE', @level1name = N'{table.TableName}', @level2type = NULL, @level2name = NULL;");
+			EndBatch(output);
+		}
+
 		foreach (var column in table.Columns)
 		{
 			if (!column.Description.IsNullOrEmpty())

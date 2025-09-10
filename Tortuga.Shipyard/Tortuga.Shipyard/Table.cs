@@ -62,6 +62,11 @@ public class Table : ModelBase
 	public string? PrimaryKeyConstraintName { get => Get<string?>(); set => Set(value); }
 
 	/// <summary>
+	/// Returns a collection of extended properties
+	/// </summary>
+	public new ExtendedPropertyCollection Properties => GetNew<ExtendedPropertyCollection>();
+
+	/// <summary>
 	/// Gets or sets the schema name of the table.
 	/// </summary>
 	/// <value>The name of the schema.</value>
