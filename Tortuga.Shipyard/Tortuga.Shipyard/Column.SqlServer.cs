@@ -78,7 +78,7 @@ partial class Column : ModelBase
 	{
 		return SqlServerType ?? Type switch
 		{
-			DbType.AnsiString => SqlDbType.Char,
+			DbType.AnsiString => SqlDbType.VarChar,
 			DbType.AnsiStringFixedLength => SqlDbType.Char,
 			DbType.Binary => SqlDbType.VarBinary,
 			DbType.Boolean => SqlDbType.Bit,

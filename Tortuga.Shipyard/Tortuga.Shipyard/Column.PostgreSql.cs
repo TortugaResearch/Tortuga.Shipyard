@@ -59,7 +59,7 @@ partial class Column : ModelBase
 	{
 		return PostgreSqlType ?? Type switch
 		{
-			DbType.AnsiString => NpgsqlDbType.Char,
+			DbType.AnsiString => NpgsqlDbType.Varchar,
 			DbType.AnsiStringFixedLength => NpgsqlDbType.Char,
 			DbType.Binary => NpgsqlDbType.Bytea,
 			DbType.Boolean => NpgsqlDbType.Bit,
