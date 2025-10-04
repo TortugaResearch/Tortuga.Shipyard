@@ -107,4 +107,18 @@ public class Table : ModelBase
 	{
 		return Columns.Any(c => t.SchemaName == c.ReferencedSchema && t.TableName == c.ReferencedTable);
 	}
+
+
+
+	/// <summary>
+	/// Gets or sets the schema name of the history table.
+	/// </summary>
+	/// <value>The name of the schema.</value>
+	public string? HistorySchemaName { get => Get<string>(); set => Set(value); }
+
+	/// <summary>
+	/// Gets or sets the history table name.
+	/// </summary>
+	/// <value>The name of the table.</value>
+	public string? HistoryTableName { get => Get<string>(); set => Set(value); }
 }

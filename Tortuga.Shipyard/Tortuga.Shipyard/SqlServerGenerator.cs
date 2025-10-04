@@ -59,18 +59,25 @@ public class SqlServerGenerator : Generator
 
 		foreach (var column in table.Columns)
 		{
+			var hiddenString = (column.IsHidden) ? " HIDDEN" : "";
+
 			string nullString;
 			if (column.IsIdentity)
 				if (column.IdentityIncrement.HasValue || column.IdentitySeed.HasValue)
-					nullString = $"IDENTITY({column.IdentitySeed ?? 1}, {column.IdentityIncrement ?? 1})";
+					nullString = $"IDENTITY({column.IdentitySeed ?? 1}, {column.IdentityIncrement ?? 1})" + hiddenString;
 				else
-					nullString = "IDENTITY";
+					nullString = "IDENTITY" + hiddenString;
 			else if (column.IsSparse)
-				nullString = "SPARSE";
+				nullString = "SPARSE" + hiddenString;
+			else if (column.IsRowStart)
+				nullString = $"GENERATED ALWAYS AS ROW START{hiddenString} NOT NULL";
+			else if (column.IsRowEnd)
+				nullString = $"GENERATED ALWAYS AS ROW END{hiddenString} NOT NULL";
 			else if (column.IsNullable)
-				nullString = "NULL";
+				nullString = "NULL" + hiddenString;
 			else
-				nullString = "NOT NULL";
+				nullString = "NOT NULL" + hiddenString;
+
 
 			output.Append($"\t{EscapeIdentifier(column.ColumnName)} {column.CalculateSqlServerFullType()} {nullString}");
 
@@ -88,6 +95,16 @@ public class SqlServerGenerator : Generator
 				if (!column.UniqueConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.UniqueConstraintName}");
 				output.Append(" UNIQUE");
+			}
+
+
+			var defaultValue = column.Default;
+			if (defaultValue.IsNullOrEmpty())
+			{
+				if (column.DefaultUtcTime)
+					defaultValue = "SYSUTCDATETIME()";
+				else if (column.DefaultLocalTime)
+					defaultValue = "SYSDATETIME()";
 			}
 
 			if (!column.Default.IsNullOrEmpty())
@@ -122,11 +139,27 @@ public class SqlServerGenerator : Generator
 			output.AppendLine($"PRIMARY KEY ({string.Join(",", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
 		}
 
+		var rowStart = table.Columns.FirstOrDefault(c => c.IsRowStart);
+		var rowEnd = table.Columns.FirstOrDefault(c => c.IsRowEnd);
+		if (rowStart != null && rowEnd != null)
+		{
+			output.Append('\t');
+			output.AppendLine($"PERIOD FOR SYSTEM_TIME ({EscapeIdentifier(rowStart.ColumnName)}, {EscapeIdentifier(rowEnd.ColumnName)}),");
+		}
+
+
 		output.Remove(output.Length - 3, 1); //remove trailing comma
-		output.AppendLine(");");
+		output.AppendLine(")");
 
 		if (TabSize.HasValue)
 			output.Replace("\t", new string(' ', TabSize.Value));
+
+		if (table.HistoryTableName != null)
+			output.AppendLine($"WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = {EscapeIdentifier(table.HistorySchemaName)}.{EscapeIdentifier(table.HistoryTableName)}))");
+
+		output.Remove(output.Length - 2, 2); //remove trailing line break
+		output.AppendLine(";");
+
 
 		EndBatch(output);
 
@@ -319,10 +352,10 @@ public class SqlServerGenerator : Generator
 		foreach (var column in table.Columns)
 		{
 			if (column.DefaultConstraintName.IsNullOrEmpty() && !column.Default.IsNullOrEmpty())
-				column.DefaultConstraintName = $"D_{column.ColumnName}";
+				column.DefaultConstraintName = $"D_{schemaPart}{table.TableName}_{column.ColumnName}";
 
 			if (column.CheckConstraintName.IsNullOrEmpty() && !column.Check.IsNullOrEmpty())
-				column.CheckConstraintName = $"C_{column.ColumnName}";
+				column.CheckConstraintName = $"C_{schemaPart}{table.TableName}_{column.ColumnName}";
 
 			if (column.UniqueConstraintName.IsNullOrEmpty() && column.IsUnique)
 				column.UniqueConstraintName = $"UX_{schemaPart}{table.TableName}_{column.ColumnName}";
@@ -382,5 +415,22 @@ public class SqlServerGenerator : Generator
 		}
 		else
 			output.AppendLine();
+	}
+
+#pragma warning disable CA1822 // Mark members as static
+	public Table CreateHistoryTable(Table table)
+#pragma warning restore CA1822 // Mark members as static
+	{
+		if (table == null)
+			throw new ArgumentNullException(nameof(table), $"{nameof(table)} is null.");
+		if (table.HistoryTableName == null)
+			throw new ArgumentNullException(nameof(table), $"{nameof(table.HistoryTableName)} is null.");
+
+		var result = new Table(table.HistorySchemaName ?? table.SchemaName, table.HistoryTableName);
+		foreach (var column in table.Columns)
+		{
+			result.Columns.Add(column.CloneForHistory());
+		}
+		return result;
 	}
 }

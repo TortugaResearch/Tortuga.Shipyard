@@ -1,10 +1,18 @@
 ﻿using System.Data;
+using Tortuga.Anchor.Metadata;
 using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
 
 partial class Column : ModelBase
 {
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Column" /> class.
+	/// </summary>
+	public Column()
+	{
+	}
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="Column" /> class with the specified column name, SQL Server type, and nullability.
 	/// </summary>
@@ -109,6 +117,23 @@ partial class Column : ModelBase
 			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
 		};
 	}
+	internal Column CloneForHistory()
+	{
+		var result = MetadataCache.Clone(this, CloneOptions.BypassProperties);
+		result.IsPrimaryKey = false;
+		result.IsIdentity = false;
+		result.IsRowEnd = false;
+		result.IsRowStart = false;
+		result.Default = null;
+		result.DefaultLocalTime = false;
+		result.DefaultUtcTime = false;
+		result.IsHidden = false;
+		result.CheckConstraintName = null;
+		result.Check = null;
+		result.IsUnique = false;
+		result.UniqueConstraintName = null;
+		return result;
+	}
 
 	/// <summary>
 	/// Gets or sets the SQL Server-specific type of the column.
@@ -121,4 +146,10 @@ partial class Column : ModelBase
 	/// </summary>
 	/// <value>The SQL server type override.</value>
 	public string? SqlServerTypeOverride { get => Get<string?>(); set => Set(value); }
+
+	public bool IsRowStart { get => Get<bool>(); set => Set(value); }
+
+	public bool IsRowEnd { get => Get<bool>(); set => Set(value); }
+	public bool IsHidden { get => Get<bool>(); set => Set(value); }
+
 }

@@ -69,6 +69,9 @@ public sealed partial class SqlServerTableTests : TestsBase
 );
 GO
 
+CREATE UNIQUE INDEX UX_Address_WebAddress ON Denormalized.Address(WebAddress) WHERE WebAddress IS NOT NULL;
+GO
+
 EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Address', @level0type = N'SCHEMA', @level0name = N'Denormalized', @level1type = N'TABLE', @level1name = N'Address', @level2type = NULL, @level2name = NULL;
 GO
 
@@ -151,7 +154,7 @@ GO
 (
 	ImportKey INT IDENTITY CONSTRAINT PK_Imports_NameAddresses PRIMARY KEY NONCLUSTERED,
 	ImportRunId UNIQUEIDENTIFIER NOT NULL,
-	ImportDateTime DATETIME2(7) NOT NULL CONSTRAINT D_ImportDateTime DEFAULT SYSDATETIME(),
+	ImportDateTime DATETIME2(7) NOT NULL CONSTRAINT D_Imports_NameAddresses_ImportDateTime DEFAULT SYSDATETIME(),
 	NameAddressesKey INT NULL,
 	AddressCategory SMALLINT NULL,
 	AddressNumber INT NULL,
@@ -267,5 +270,73 @@ GO
 
 		CompareOutput(expected, output);
 		Debug.WriteLine(output);
+	}
+
+
+	[TestMethod]
+	public void Scenario_4()
+	{
+		var expected = @"CREATE TABLE [Data].Address
+(
+	AddressKey INT IDENTITY CONSTRAINT PK_Address PRIMARY KEY,
+	AddressLine1 NVARCHAR(50) NULL,
+	AddressLine2 NVARCHAR(50) NULL,
+	City NVARCHAR(50) NULL,
+	[State] INT NULL,
+	ZipCode NVARCHAR(12) NULL,
+	ValidFromDateTime DATETIME2(7) GENERATED ALWAYS AS ROW START NOT NULL,
+	ValidToDateTime DATETIME2(7) GENERATED ALWAYS AS ROW END HIDDEN NOT NULL,
+	PERIOD FOR SYSTEM_TIME (ValidFromDateTime, ValidToDateTime)
+)
+WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = History.Address));
+GO
+
+";
+
+		var expected2 = @"CREATE TABLE History.Address
+(
+	AddressKey INT NOT NULL,
+	AddressLine1 NVARCHAR(50) NULL,
+	AddressLine2 NVARCHAR(50) NULL,
+	City NVARCHAR(50) NULL,
+	[State] INT NULL,
+	ZipCode NVARCHAR(12) NULL,
+	ValidFromDateTime DATETIME2(7) NOT NULL,
+	ValidToDateTime DATETIME2(7) NOT NULL
+);
+GO
+
+";
+
+		var table = new Table("Data", "Address");
+
+		table.Columns.Add(new("AddressKey", DbType.Int32) { IsIdentity = true, IsPrimaryKey = true });
+		table.Columns.Add(new("AddressLine1", DbType.String, 50, true));
+		table.Columns.Add(new("AddressLine2", DbType.String, 50, true));
+		table.Columns.Add(new("City", DbType.String, 50, true));
+		table.Columns.Add(new("State", DbType.Int32, true));
+		table.Columns.Add(new("ZipCode", DbType.String, 12, true));
+		table.Columns.Add(new("ValidFromDateTime", DbType.DateTime2, 7) { IsRowStart = true });
+		table.Columns.Add(new("ValidToDateTime", DbType.DateTime2, 7) { IsRowEnd = true, IsHidden = true });
+
+		table.HistorySchemaName = "History";
+		table.HistoryTableName = "Address";
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
+
+		var historyTable = generator.CreateHistoryTable(table);
+		var output2 = generator.BuildTable(historyTable);
+
+
+		Debug.WriteLine(output2);
+		CompareOutput(expected2, output2);
+
 	}
 }
