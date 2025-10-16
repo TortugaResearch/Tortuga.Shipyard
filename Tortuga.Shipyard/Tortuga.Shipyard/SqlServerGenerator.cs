@@ -393,12 +393,11 @@ public class SqlServerGenerator : Generator
 		if (identifier.IsNullOrEmpty())
 			return identifier;
 
+
 		if (EscapeAllIdentifiers
 				|| Keywords.Contains(identifier)
 				|| Keywords.Contains(identifier)
-				|| identifier.Contains('.', StringComparison.Ordinal)
-				|| identifier.Contains('-', StringComparison.Ordinal)
-				|| identifier.Contains(' ', StringComparison.Ordinal)
+				|| identifier.Any(c => !char.IsLetterOrDigit(c) && c != '_')
 				|| char.IsNumber(identifier[0])
 			)
 			return '[' + identifier + ']';
@@ -417,20 +416,5 @@ public class SqlServerGenerator : Generator
 			output.AppendLine();
 	}
 
-#pragma warning disable CA1822 // Mark members as static
-	public Table CreateHistoryTable(Table table)
-#pragma warning restore CA1822 // Mark members as static
-	{
-		if (table == null)
-			throw new ArgumentNullException(nameof(table), $"{nameof(table)} is null.");
-		if (table.HistoryTableName == null)
-			throw new ArgumentNullException(nameof(table), $"{nameof(table.HistoryTableName)} is null.");
 
-		var result = new Table(table.HistorySchemaName ?? table.SchemaName, table.HistoryTableName);
-		foreach (var column in table.Columns)
-		{
-			result.Columns.Add(column.CloneForHistory());
-		}
-		return result;
-	}
 }

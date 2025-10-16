@@ -65,7 +65,8 @@ public sealed partial class SqlServerTableTests : TestsBase
 	IndChgsLastModifiedDateTime DATETIME2(6) NULL,
 	IndChgsLastModifiedByUserId NVARCHAR(8) NULL,
 	LastImportRunId UNIQUEIDENTIFIER NOT NULL,
-	LastImportDateTime DATETIME2(7) NOT NULL
+	LastImportDateTime DATETIME2(7) NOT NULL,
+	[Pass/Fail] BIT NOT NULL
 );
 GO
 
@@ -137,6 +138,7 @@ GO
 		table.Columns.Add(new("IndChgsLastModifiedByUserId", DbType.String, 8, true));
 		table.Columns.Add(new("LastImportRunId", DbType.Guid, false));
 		table.Columns.Add(new("LastImportDateTime", DbType.DateTime2, 7, false));
+		table.Columns.Add(new("Pass/Fail", DbType.Boolean, false));
 
 		var generator = new SqlServerGenerator();
 		generator.NameConstraints(table);
@@ -331,7 +333,7 @@ GO
 		Debug.WriteLine(output);
 		CompareOutput(expected, output);
 
-		var historyTable = generator.CreateHistoryTable(table);
+		var historyTable = table.CreateHistoryTable();
 		var output2 = generator.BuildTable(historyTable);
 
 

@@ -132,6 +132,9 @@ partial class Column : ModelBase
 		result.Check = null;
 		result.IsUnique = false;
 		result.UniqueConstraintName = null;
+		result.ReferencedColumn = null;
+		result.ReferencedSchema = null;
+		result.ReferencedTable = null;
 		return result;
 	}
 

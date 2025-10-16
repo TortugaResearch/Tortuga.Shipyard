@@ -121,4 +121,17 @@ public class Table : ModelBase
 	/// </summary>
 	/// <value>The name of the table.</value>
 	public string? HistoryTableName { get => Get<string>(); set => Set(value); }
+
+	public Table CreateHistoryTable()
+	{
+		if (HistoryTableName == null)
+			throw new InvalidOperationException($"{nameof(HistoryTableName)} is null.");
+
+		var result = new Table(HistorySchemaName ?? SchemaName, HistoryTableName);
+		foreach (var column in Columns)
+		{
+			result.Columns.Add(column.CloneForHistory());
+		}
+		return result;
+	}
 }
