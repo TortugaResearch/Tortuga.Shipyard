@@ -50,7 +50,6 @@ partial class Column : ModelBase
 		IsNullable = isNullable;
 	}
 
-
 	/// <summary>
 	/// Gets the SqlDbType for PostgreSQL, converting from DbType if necessary.
 	/// </summary>
@@ -62,7 +61,7 @@ partial class Column : ModelBase
 			DbType.AnsiString => NpgsqlDbType.Varchar,
 			DbType.AnsiStringFixedLength => NpgsqlDbType.Char,
 			DbType.Binary => NpgsqlDbType.Bytea,
-			DbType.Boolean => NpgsqlDbType.Bit,
+			DbType.Boolean => NpgsqlDbType.Boolean,
 			DbType.Byte => NpgsqlDbType.Bytea,
 			DbType.Currency => NpgsqlDbType.Money,
 			DbType.Date => NpgsqlDbType.Date,
@@ -88,7 +87,6 @@ partial class Column : ModelBase
 			DbType.Xml => NpgsqlDbType.Xml,
 
 			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
-
 		};
 	}
 
@@ -110,6 +108,7 @@ partial class Column : ModelBase
 				$"bigint",
 			NpgsqlDbType.Bytea => $"bytea",
 			NpgsqlDbType.Bit => $"bit",
+			NpgsqlDbType.Boolean => $"boolean",
 			NpgsqlDbType.Char => $"char({MaxLength})",
 			NpgsqlDbType.Date => $"date",
 			NpgsqlDbType.TimestampTz =>
