@@ -103,9 +103,7 @@ partial class Column : ModelBase
 
 		return typeCode switch
 		{
-			NpgsqlDbType.Bigint =>
-				IsIdentity ? "bigserial" :
-				$"bigint",
+			NpgsqlDbType.Bigint => $"bigint",
 			NpgsqlDbType.Bytea => $"bytea",
 			NpgsqlDbType.Bit => $"bit",
 			NpgsqlDbType.Boolean => $"boolean",
@@ -119,9 +117,7 @@ partial class Column : ModelBase
 				Precision.HasValue ? $"numeric({Precision})" :
 				$"numeric()",
 			NpgsqlDbType.Double => $"double precision",
-			NpgsqlDbType.Integer =>
-				IsIdentity ? "serial" :
-				$"integer",
+			NpgsqlDbType.Integer => $"integer",
 			NpgsqlDbType.Json => $"json",
 			NpgsqlDbType.Jsonb => $"jsonb",
 			NpgsqlDbType.Money => $"money",

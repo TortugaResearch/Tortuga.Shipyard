@@ -66,6 +66,11 @@ public class PostgreSqlGenerator : Generator
 			//		output.Append(" NONCLUSTERED");
 			//}
 
+			if (column.IsIdentity)
+			{
+				output.Append(" GENERATED ALWAYS AS IDENTITY");
+			}
+
 			if (column.IsUnique)
 			{
 				if (!column.UniqueConstraintName.IsNullOrEmpty())
@@ -123,6 +128,13 @@ public class PostgreSqlGenerator : Generator
 			output.Replace("\t", new string(' ', TabSize.Value));
 
 		EndBatch(output);
+
+		foreach (var column in table.Columns.Where(c => c.IsIdentity && c.IdentitySeed.HasValue))
+		{
+			output.AppendLine("-- Setting the identity seed");
+			output.AppendLine($"SELECT setval(pg_get_serial_sequence('{SnakeCaseIdentifier(table.SchemaName)}.{SnakeCaseIdentifier(table.TableName)}', '{SnakeCaseIdentifier(column.ColumnName)}'), (SELECT GREATEST(500, MAX({EscapeIdentifier(column.ColumnName)})) FROM {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)}));");
+			EndBatch(output);
+		}
 
 		if (table.ClusteredIndex != null)
 		{
@@ -222,6 +234,31 @@ public class PostgreSqlGenerator : Generator
 	}
 
 	/// <summary>
+	/// Escapes the identifier.
+	/// </summary>
+	/// <param name="identifier">The identifier.</param>
+	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
+	[return: NotNullIfNotNull(nameof(identifier))]
+	public override string? EscapeIdentifier(string? identifier)
+	{
+		if (identifier.IsNullOrEmpty())
+			return identifier;
+
+		var result = SnakeCaseIdentifier(identifier);
+
+		if (EscapeAllIdentifiers
+				|| Keywords.Contains(result)
+				|| result.Contains('.', StringComparison.Ordinal)
+				|| result.Contains('-', StringComparison.Ordinal)
+				|| result.Contains(' ', StringComparison.Ordinal)
+				|| char.IsNumber(result[0])
+			)
+			return '"' + result + '"';
+		else
+			return result;
+	}
+
+	/// <summary>
 	/// Names the constraints.
 	/// </summary>
 	/// <param name="table">The table.</param>
@@ -261,36 +298,6 @@ public class PostgreSqlGenerator : Generator
 		}
 	}
 
-	/// <summary>
-	/// Escapes the identifier.
-	/// </summary>
-	/// <param name="identifier">The identifier.</param>
-	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
-	[return: NotNullIfNotNull(nameof(identifier))]
-	public override string? EscapeIdentifier(string? identifier)
-	{
-		if (identifier.IsNullOrEmpty())
-			return identifier;
-
-		var result = SnakeCaseIdentifier(identifier);
-
-		if (EscapeAllIdentifiers
-				|| Keywords.Contains(result)
-				|| result.Contains('.', StringComparison.Ordinal)
-				|| result.Contains('-', StringComparison.Ordinal)
-				|| result.Contains(' ', StringComparison.Ordinal)
-				|| char.IsNumber(result[0])
-			)
-			return '"' + result + '"';
-		else
-			return result;
-	}
-
-	static void EndBatch(StringBuilder output)
-	{
-		output.AppendLine();
-	}
-
 	[return: NotNullIfNotNull(nameof(identifier))]
 	public string? SnakeCaseIdentifier(string? identifier)
 	{
@@ -311,5 +318,10 @@ public class PostgreSqlGenerator : Generator
 		else
 			result = identifier;
 		return result;
+	}
+
+	static void EndBatch(StringBuilder output)
+	{
+		output.AppendLine();
 	}
 }

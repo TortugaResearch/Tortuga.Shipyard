@@ -21,7 +21,7 @@ public sealed partial class PostgreSqlTableTests : TestsBase
 	{
 		var expected = @"CREATE TABLE ""HR"".""Employee""
 (
-	""EmployeeKey"" serial,
+	""EmployeeKey"" integer GENERATED ALWAYS AS IDENTITY,
 	""FirstName"" varchar(50) NOT NULL,
 	""MiddleName"" varchar(50) NULL,
 	""LastName"" varchar(50) NOT NULL,
@@ -61,7 +61,7 @@ COMMENT ON COLUMN ""HR"".""Employee"".""LastName"" IS 'You''re in touble name.';
 	{
 		var expected = @"CREATE TABLE hr.employee
 (
-	employee_key serial,
+	employee_key integer GENERATED ALWAYS AS IDENTITY,
 	first_name varchar(50) NOT NULL,
 	middle_name varchar(50) NULL,
 	last_name varchar(50) NOT NULL,
