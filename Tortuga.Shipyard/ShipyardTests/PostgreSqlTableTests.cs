@@ -38,6 +38,9 @@ public sealed partial class PostgreSqlTableTests : TestsBase
 	CONSTRAINT Employee_ManagerKey_fkey FOREIGN KEY (""ManagerKey"") REFERENCES ""HR"".""Employee""(""EmployeeKey"")
 );
 
+-- Setting the identity seed
+SELECT setval(pg_get_serial_sequence('HR.Employee', 'EmployeeKey'), (SELECT GREATEST(101, MAX(""EmployeeKey"")) FROM ""HR"".""Employee""));
+
 COMMENT ON TABLE ""HR"".""Employee"" IS 'This is my table''s description';
 
 COMMENT ON COLUMN ""HR"".""Employee"".""FirstName"" IS 'Hello Name';
@@ -78,6 +81,9 @@ COMMENT ON COLUMN ""HR"".""Employee"".""LastName"" IS 'You''re in touble name.';
 	CONSTRAINT employee_manager_key_fkey FOREIGN KEY (manager_key) REFERENCES hr.employee(employee_key)
 );
 
+-- Setting the identity seed
+SELECT setval(pg_get_serial_sequence('hr.employee', 'employee_key'), (SELECT GREATEST(101, MAX(employee_key)) FROM hr.employee));
+
 COMMENT ON TABLE hr.employee IS 'This is my table''s description';
 
 COMMENT ON COLUMN hr.employee.first_name IS 'Hello Name';
@@ -100,7 +106,7 @@ COMMENT ON COLUMN hr.employee.last_name IS 'You''re in touble name.';
 	{
 		var table = new Table("HR", "Employee");
 		table.Description = "This is my table's description";
-		table.Columns.Add(new("EmployeeKey", NpgsqlDbType.Integer) { IsIdentity = true, IsPrimaryKey = true });
+		table.Columns.Add(new("EmployeeKey", NpgsqlDbType.Integer) { IsIdentity = true, IsPrimaryKey = true, IdentitySeed = 101 });
 		table.Columns.Add(new("FirstName", NpgsqlDbType.Varchar, 50) { Description = "Hello Name"});
 		table.Columns.Add(new("MiddleName", NpgsqlDbType.Varchar, 50, true));
 		table.Columns.Add(new("LastName", NpgsqlDbType.Varchar, 50) {Description = "You're in touble name."});

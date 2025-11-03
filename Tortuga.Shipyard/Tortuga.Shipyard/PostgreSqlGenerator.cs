@@ -132,7 +132,7 @@ public class PostgreSqlGenerator : Generator
 		foreach (var column in table.Columns.Where(c => c.IsIdentity && c.IdentitySeed.HasValue))
 		{
 			output.AppendLine("-- Setting the identity seed");
-			output.AppendLine($"SELECT setval(pg_get_serial_sequence('{SnakeCaseIdentifier(table.SchemaName)}.{SnakeCaseIdentifier(table.TableName)}', '{SnakeCaseIdentifier(column.ColumnName)}'), (SELECT GREATEST(500, MAX({EscapeIdentifier(column.ColumnName)})) FROM {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)}));");
+			output.AppendLine($"SELECT setval(pg_get_serial_sequence('{SnakeCaseIdentifier(table.SchemaName)}.{SnakeCaseIdentifier(table.TableName)}', '{SnakeCaseIdentifier(column.ColumnName)}'), (SELECT GREATEST({column.IdentitySeed}, MAX({EscapeIdentifier(column.ColumnName)})) FROM {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)}));");
 			EndBatch(output);
 		}
 
