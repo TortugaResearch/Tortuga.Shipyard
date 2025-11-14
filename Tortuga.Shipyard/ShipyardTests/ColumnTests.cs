@@ -280,4 +280,63 @@ public sealed class ColumnTests
 		Assert.IsTrue(column.IsRowEnd);
 		Assert.IsTrue(column.IsHidden);
 	}
+
+	[TestMethod]
+	public void Column_PostgreSqlType_WithChar_Test()
+	{
+		var column = new Column("TestColumn", NpgsqlDbType.Char, 10);
+		Assert.AreEqual(NpgsqlDbType.Char, column.PostgreSqlType);
+		Assert.AreEqual(10, column.MaxLength);
+	}
+
+	[TestMethod]
+	public void Column_PostgreSqlType_WithBytea_Test()
+	{
+		var column = new Column("TestColumn", NpgsqlDbType.Bytea, 100);
+		Assert.AreEqual(NpgsqlDbType.Bytea, column.PostgreSqlType);
+		Assert.AreEqual(100, column.MaxLength);
+	}
+
+	[TestMethod]
+	public void Column_PostgreSqlType_WithTimestampTz_Test()
+	{
+		var column = new Column("TestColumn", NpgsqlDbType.TimestampTz, 6);
+		Assert.AreEqual(NpgsqlDbType.TimestampTz, column.PostgreSqlType);
+		Assert.AreEqual(6, column.Precision);
+	}
+
+	[TestMethod]
+	[ExpectedException(typeof(ArgumentOutOfRangeException))]
+	public void Column_PostgreSqlType_InvalidTypeWithParameter_Test()
+	{
+		_ = new Column("TestColumn", NpgsqlDbType.Boolean, 100);
+	}
+
+	[TestMethod]
+	public void Column_HasDefault_WithDefault_Test()
+	{
+		var column = new Column("TestColumn", DbType.String) { Default = "'TestValue'" };
+		Assert.IsTrue(column.HasDefault);
+	}
+
+	[TestMethod]
+	public void Column_HasDefault_WithDefaultLocalTime_Test()
+	{
+		var column = new Column("TestColumn", DbType.DateTime) { DefaultLocalTime = true };
+		Assert.IsTrue(column.HasDefault);
+	}
+
+	[TestMethod]
+	public void Column_HasDefault_WithDefaultUtcTime_Test()
+	{
+		var column = new Column("TestColumn", DbType.DateTime) { DefaultUtcTime = true };
+		Assert.IsTrue(column.HasDefault);
+	}
+
+	[TestMethod]
+	public void Column_HasDefault_NoDefault_Test()
+	{
+		var column = new Column("TestColumn", DbType.String);
+		Assert.IsFalse(column.HasDefault);
+	}
 }

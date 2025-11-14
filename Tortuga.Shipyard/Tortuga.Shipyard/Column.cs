@@ -66,13 +66,13 @@ public partial class Column : ModelBase
 			case DbType.AnsiString:
 			case DbType.AnsiStringFixedLength:
 			case DbType.Binary:
-			case DbType.Decimal:
 			case DbType.String:
 			case DbType.StringFixedLength:
-			case DbType.VarNumeric:
 				MaxLength = parameter1;
 				break;
 
+			case DbType.VarNumeric:
+			case DbType.Decimal:
 			case DbType.DateTime2:
 				Precision = parameter1;
 				break;
@@ -109,20 +109,20 @@ public partial class Column : ModelBase
 	public string? Default { get => Get<string?>(); set => Set(value); }
 
 	/// <summary>
-	/// If true, default this column to the database's local server time. 
-	/// </summary>
-	public bool DefaultLocalTime { get => Get<bool>(); set => Set(value); }
-
-	/// <summary>
-	/// If true, default this column to the database's time in UTC. 
-	/// </summary>
-	public bool DefaultUtcTime { get => Get<bool>(); set => Set(value); }
-
-	/// <summary>
 	/// Gets or sets the name of the default value constraint.
 	/// </summary>
 	/// <value>The default name of the value constraint.</value>
 	public string? DefaultConstraintName { get => Get<string?>(); set => Set(value); }
+
+	/// <summary>
+	/// If true, default this column to the database's local server time.
+	/// </summary>
+	public bool DefaultLocalTime { get => Get<bool>(); set => Set(value); }
+
+	/// <summary>
+	/// If true, default this column to the database's time in UTC.
+	/// </summary>
+	public bool DefaultUtcTime { get => Get<bool>(); set => Set(value); }
 
 	/// <summary>
 	/// Gets or sets the description of the column.

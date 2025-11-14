@@ -143,4 +143,179 @@ public sealed class JoinedViewSourceTests
 
 		Assert.AreEqual(2, joinedSource.Outputs.Count);
 	}
+
+	[TestMethod]
+	public void JoinedViewSource_AddColumn_WithOutputName_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols);
+		joinedSource.AddColumn("ColumnName", "AliasName");
+
+		Assert.AreEqual(1, joinedSource.Outputs.Count);
+		var viewColumn = joinedSource.Outputs[0] as ViewColumn;
+		Assert.IsNotNull(viewColumn);
+		Assert.AreEqual("ColumnName", viewColumn.ColumnName);
+		Assert.AreEqual("AliasName", viewColumn.OutputColumnName);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_MixedOutputTypes_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols);
+		joinedSource.AddColumn("Name");
+		joinedSource.AddExpression("FullName", "FirstName + ' ' + LastName");
+		joinedSource.AddColumn("Email", "EmailAddress");
+
+		Assert.AreEqual(3, joinedSource.Outputs.Count);
+		Assert.IsInstanceOfType(joinedSource.Outputs[0], typeof(ViewColumn));
+		Assert.IsInstanceOfType(joinedSource.Outputs[1], typeof(ExpressionColumn));
+		Assert.IsInstanceOfType(joinedSource.Outputs[2], typeof(ViewColumn));
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_EmptyJoinColumns_Test()
+	{
+		var leftCols = new List<string>();
+		var rightCols = new List<string>();
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols);
+
+		Assert.AreEqual(0, joinedSource.LeftJoinColumns.Count);
+		Assert.AreEqual(0, joinedSource.RightJoinColumns.Count);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_PropertyChanges_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols);
+		
+		joinedSource.SchemaName = "HR";
+		joinedSource.TableOrViewName = "Employee";
+		joinedSource.Alias = "emp";
+		joinedSource.JoinExpression = "custom.expression";
+
+		Assert.AreEqual("HR", joinedSource.SchemaName);
+		Assert.AreEqual("Employee", joinedSource.TableOrViewName);
+		Assert.AreEqual("emp", joinedSource.Alias);
+		Assert.AreEqual("custom.expression", joinedSource.JoinExpression);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_NullAlias_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols)
+		{
+			Alias = "test"
+		};
+		
+		joinedSource.Alias = null;
+
+		Assert.IsNull(joinedSource.Alias);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_NullJoinExpression_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols)
+		{
+			JoinExpression = "test.expression"
+		};
+		
+		joinedSource.JoinExpression = null;
+
+		Assert.IsNull(joinedSource.JoinExpression);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_ChainingAddColumn_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols)
+			.AddColumn("Col1")
+			.AddColumn("Col2")
+			.AddExpression("Expr1", "Expression1");
+
+		Assert.AreEqual(3, joinedSource.Outputs.Count);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_AddColumnReturnsThis_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols);
+		var result = joinedSource.AddColumn("TestColumn");
+
+		Assert.AreSame(joinedSource, result);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_AddExpressionReturnsThis_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols);
+		var result = joinedSource.AddExpression("OutputName", "TestExpression");
+
+		Assert.AreSame(joinedSource, result);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_DifferentSchemas_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("CustomSchema", "CustomTable", JoinType.LeftJoin, leftCols, rightCols);
+
+		Assert.AreEqual("CustomSchema", joinedSource.SchemaName);
+		Assert.AreEqual("CustomTable", joinedSource.TableOrViewName);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_LongTableName_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+		var longName = new string('A', 128);
+
+		var joinedSource = new JoinedViewSource("dbo", longName, JoinType.InnerJoin, leftCols, rightCols);
+
+		Assert.AreEqual(longName, joinedSource.TableOrViewName);
+	}
+
+	[TestMethod]
+	public void JoinedViewSource_MultipleExpressions_Test()
+	{
+		var leftCols = new List<string> { "Id" };
+		var rightCols = new List<string> { "Id" };
+
+		var joinedSource = new JoinedViewSource("dbo", "Table1", JoinType.InnerJoin, leftCols, rightCols);
+		joinedSource.AddExpression("Expr1", "Expression1");
+		joinedSource.AddExpression("Expr2", "Expression2");
+		joinedSource.AddExpression("Expr3", "Expression3");
+
+		Assert.AreEqual(3, joinedSource.Outputs.Count);
+		Assert.IsInstanceOfType(joinedSource.Outputs[0], typeof(ExpressionColumn));
+		Assert.IsInstanceOfType(joinedSource.Outputs[1], typeof(ExpressionColumn));
+		Assert.IsInstanceOfType(joinedSource.Outputs[2], typeof(ExpressionColumn));
+	}
 }
