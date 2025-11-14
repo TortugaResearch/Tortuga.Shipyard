@@ -9,14 +9,288 @@ namespace ShipyardTests;
 public sealed partial class SqlServerTableTests : TestsBase
 {
 	[TestMethod]
-	public void No_Columns_Test()
+	public void CheckConstraint_Test()
 	{
-		var table = new Table("dbo", "foo");
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Id INT NOT NULL CONSTRAINT PK_TestTable PRIMARY KEY,
+	Age INT NOT NULL CONSTRAINT CK_Age CHECK (Age >= 0 AND Age <= 120)
+);
+GO
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("Age", DbType.Int32)
+		{
+			Check = "Age >= 0 AND Age <= 120",
+			CheckConstraintName = "CK_Age"
+		});
+
 		var generator = new SqlServerGenerator();
-		var results = generator.Validate(table);
-		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "Columns")));
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
 	}
 
+	[TestMethod]
+	public void CompoundPrimaryKey_Test()
+	{
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Key1 INT NOT NULL,
+	Key2 INT NOT NULL,
+	[Data] NVARCHAR(50) NULL,
+	CONSTRAINT PK_TestTable PRIMARY KEY (Key1, Key2)
+);
+GO
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Key1", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("Key2", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("Data", DbType.String, 50, true));
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
+	}
+
+	[TestMethod]
+	public void DefaultConstraintWithLocalTime_Test()
+	{
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Id INT NOT NULL CONSTRAINT PK_TestTable PRIMARY KEY,
+	CreatedDate DATETIME2(7) NOT NULL CONSTRAINT D_TestTable_CreatedDate DEFAULT (SYSDATETIME())
+);
+GO
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("CreatedDate", DbType.DateTime2, 7) { DefaultLocalTime = true });
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
+	}
+
+	[TestMethod]
+	public void DefaultConstraintWithUtcTime_Test()
+	{
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Id INT NOT NULL CONSTRAINT PK_TestTable PRIMARY KEY,
+	CreatedDateUtc DATETIME2(7) NOT NULL CONSTRAINT D_TestTable_CreatedDateUtc DEFAULT (SYSUTCDATETIME())
+);
+GO
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("CreatedDateUtc", DbType.DateTime2, 7) { DefaultUtcTime = true });
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
+	}
+
+	[TestMethod]
+	public void ForeignKeyWithDifferentSchema_Test()
+	{
+		var expected = @"CREATE TABLE dbo.[Order]
+(
+	OrderId INT NOT NULL CONSTRAINT PK_Order PRIMARY KEY,
+	CustomerId INT NOT NULL CONSTRAINT FK_Order_CustomerId REFERENCES Sales.Customer(CustomerId)
+);
+
+";
+
+		var table = new Table("dbo", "Order");
+		table.Columns.Add(new("OrderId", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("CustomerId", DbType.Int32)
+		{
+			ReferencedSchema = "Sales",
+			ReferencedTable = "Customer",
+			ReferencedColumn = "CustomerId"
+		});
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
+	}
+
+	[TestMethod]
+	[ExpectedException(typeof(ArgumentNullException))]
+	public void Generator_BuildTable_Null_Test()
+	{
+		var generator = new SqlServerGenerator();
+		generator.BuildTable(null!);
+	}
+
+	[TestMethod]
+	[ExpectedException(typeof(ArgumentNullException))]
+	public void Generator_BuildView_Null_Test()
+	{
+		var generator = new SqlServerGenerator();
+		generator.BuildView(null!);
+	}
+
+	[TestMethod]
+	public void Generator_EscapeIdentifier_Keyword_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var result = generator.EscapeIdentifier("Select");
+
+		Assert.AreEqual("[Select]", result);
+	}
+
+	[TestMethod]
+	public void Generator_EscapeIdentifier_Normal_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var result = generator.EscapeIdentifier("NormalColumn");
+
+		Assert.AreEqual("NormalColumn", result);
+	}
+
+	[TestMethod]
+	public void Generator_EscapeIdentifier_Null_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var result = generator.EscapeIdentifier(null);
+
+		Assert.IsNull(result);
+	}
+
+	[TestMethod]
+	public void Generator_EscapeIdentifier_WithNumber_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var result = generator.EscapeIdentifier("123Column");
+
+		Assert.AreEqual("[123Column]", result);
+	}
+
+	[TestMethod]
+	public void Generator_EscapeIdentifier_WithSpecialChars_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var result = generator.EscapeIdentifier("Column Name");
+
+		Assert.AreEqual("[Column Name]", result);
+	}
+
+	[TestMethod]
+	public void Generator_EscapeTextUnicode_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var result = generator.EscapeTextUnicode("Test value");
+
+		Assert.AreEqual("N'Test value'", result);
+	}
+
+	[TestMethod]
+	public void Generator_EscapeTextUnicode_WithQuotes_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var result = generator.EscapeTextUnicode("It's a test");
+
+		Assert.AreEqual("N'It''s a test'", result);
+	}
+
+	[TestMethod]
+	public void Generator_IncludeSchemaNameInConstraintNames_Test()
+	{
+		var generator = new SqlServerGenerator();
+		generator.IncludeSchemaNameInConstraintNames = true;
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+
+		generator.NameConstraints(table);
+
+		Assert.AreEqual("PK_dbo_TestTable", table.PrimaryKeyConstraintName);
+	}
+
+	[TestMethod]
+	[ExpectedException(typeof(ArgumentNullException))]
+	public void Generator_NameConstraints_Null_Test()
+	{
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints((Table)null!);
+	}
+
+	[TestMethod]
+	public void Generator_TabSize_Integration_Test()
+	{
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+
+		var generator = new SqlServerGenerator();
+		generator.TabSize = 4;
+		generator.NameConstraints(table);
+		var output = generator.BuildTable(table);
+
+		Assert.IsFalse(output.Contains("\t"));
+		Assert.IsTrue(output.Contains("    ")); // 4 spaces
+	}
+
+	[TestMethod]
+	public void Generator_UseBatchSeparator_Property_Test()
+	{
+		var generator = new SqlServerGenerator();
+
+		Assert.IsFalse(generator.UseBatchSeperator);
+
+		generator.UseBatchSeperator = true;
+		Assert.IsTrue(generator.UseBatchSeperator);
+	}
+
+	[TestMethod]
+	public void Generator_Validate_IdentityOnStringColumn_Test()
+	{
+		var generator = new SqlServerGenerator();
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.String, 50) { IsIdentity = true, IsPrimaryKey = true });
+
+		var results = generator.Validate(table);
+
+		Assert.IsTrue(results.Any(r => r.MemberNames.Contains("IsIdentity")));
+	}
+
+	[TestMethod]
+	public void Identify_Type_Fail_Test()
+	{
+		var table = new Table("dbo", "foo");
+		table.Columns.Add(new("Test", DbType.String) { IsIdentity = true });
+		var generator = new SqlServerGenerator();
+		var results = generator.Validate(table);
+		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "IsIdentity")));
+	}
 
 	[TestMethod]
 	public void Identify_Type_Test()
@@ -29,13 +303,111 @@ public sealed partial class SqlServerTableTests : TestsBase
 	}
 
 	[TestMethod]
-	public void Identify_Type_Fail_Test()
+	public void IdentityWithSeedAndIncrement_Test()
+	{
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Id INT IDENTITY(1000, 10) CONSTRAINT PK_TestTable PRIMARY KEY
+);
+GO
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32)
+		{
+			IsPrimaryKey = true,
+			IsIdentity = true,
+			IdentitySeed = 1000,
+			IdentityIncrement = 10
+		});
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
+	}
+
+	[TestMethod]
+	public void IndexWithIncludedColumns_Test()
+	{
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Id INT NOT NULL CONSTRAINT PK_TestTable PRIMARY KEY,
+	FirstName NVARCHAR(50) NOT NULL,
+	LastName NVARCHAR(50) NOT NULL,
+	Email NVARCHAR(100) NULL,
+	Phone NVARCHAR(20) NULL
+);
+GO
+
+CREATE NONCLUSTERED INDEX IX_TestTable_Names ON dbo.TestTable (FirstName, LastName) INCLUDE (Email, Phone);
+GO
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("FirstName", DbType.String, 50));
+		table.Columns.Add(new("LastName", DbType.String, 50));
+		table.Columns.Add(new("Email", DbType.String, 100, true));
+		table.Columns.Add(new("Phone", DbType.String, 20, true));
+
+		var index = new Index { IndexName = "IX_TestTable_Names" };
+		index.OrderedColumns.Add("FirstName");
+		index.OrderedColumns.Add("LastName");
+		index.IncludedColumns.Add("Email");
+		index.IncludedColumns.Add("Phone");
+		table.Indexes.Add(index);
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
+	}
+
+	[TestMethod]
+	public void No_Columns_Test()
 	{
 		var table = new Table("dbo", "foo");
-		table.Columns.Add(new("Test", DbType.String) { IsIdentity = true });
 		var generator = new SqlServerGenerator();
 		var results = generator.Validate(table);
-		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "IsIdentity")));
+		Assert.IsTrue(results.Any(e => e.MemberNames.Any(c => c == "Columns")));
+	}
+
+	[TestMethod]
+	public void NullableUniqueColumn_Test()
+	{
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Id INT NOT NULL CONSTRAINT PK_TestTable PRIMARY KEY,
+	Email NVARCHAR(100) NULL
+);
+
+CREATE UNIQUE INDEX UX_Email ON dbo.TestTable(Email) WHERE Email IS NOT NULL;
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("Email", DbType.String, 100, true)
+		{
+			IsUnique = true,
+			UniqueConstraintName = "UX_Email"
+		});
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
 	}
 
 	[TestMethod]
@@ -156,7 +528,7 @@ GO
 (
 	ImportKey INT IDENTITY CONSTRAINT PK_Imports_NameAddresses PRIMARY KEY NONCLUSTERED,
 	ImportRunId UNIQUEIDENTIFIER NOT NULL,
-	ImportDateTime DATETIME2(7) NOT NULL CONSTRAINT D_Imports_NameAddresses_ImportDateTime DEFAULT SYSDATETIME(),
+	ImportDateTime DATETIME2(7) NOT NULL CONSTRAINT D_Imports_NameAddresses_ImportDateTime DEFAULT (SYSDATETIME()),
 	NameAddressesKey INT NULL,
 	AddressCategory SMALLINT NULL,
 	AddressNumber INT NULL,
@@ -274,7 +646,6 @@ GO
 		Debug.WriteLine(output);
 	}
 
-
 	[TestMethod]
 	public void Scenario_4()
 	{
@@ -329,16 +700,38 @@ GO
 		generator.UseBatchSeperator = true;
 		var output = generator.BuildTable(table);
 
-
 		Debug.WriteLine(output);
 		CompareOutput(expected, output);
 
 		var historyTable = table.CreateHistoryTable();
 		var output2 = generator.BuildTable(historyTable);
 
-
 		Debug.WriteLine(output2);
 		CompareOutput(expected2, output2);
+	}
 
+	[TestMethod]
+	public void SparseColumn_Test()
+	{
+		var expected = @"CREATE TABLE dbo.TestTable
+(
+	Id INT NOT NULL CONSTRAINT PK_TestTable PRIMARY KEY,
+	OptionalData NVARCHAR(MAX) SPARSE
+);
+GO
+
+";
+
+		var table = new Table("dbo", "TestTable");
+		table.Columns.Add(new("Id", DbType.Int32) { IsPrimaryKey = true });
+		table.Columns.Add(new("OptionalData", DbType.String, -1, true) { IsSparse = true });
+
+		var generator = new SqlServerGenerator();
+		generator.NameConstraints(table);
+		generator.UseBatchSeperator = true;
+		var output = generator.BuildTable(table);
+
+		Debug.WriteLine(output);
+		CompareOutput(expected, output);
 	}
 }

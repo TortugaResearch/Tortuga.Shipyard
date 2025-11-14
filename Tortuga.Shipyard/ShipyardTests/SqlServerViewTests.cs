@@ -11,7 +11,7 @@ public sealed class SqlServerViewTests : TestsBase
 	public void Scenario_1()
 	{
 		var expected = @"CREATE VIEW Reporting.NameAddresses
-(
+AS
 SELECT
 	na.NameAddressesKey,
 	na.AddressCategory,
@@ -29,33 +29,33 @@ SELECT
 	na.NotePadKey,
 	na.LastImportRunId,
 	na.LastImportDateTime,
-	n.FirstName AS FirstName,
-	n.LastName AS LastName,
-	n.MiddleName AS MiddleName,
-	n.BirthDate AS BirthDate,
-	a.AddressLine1 AS AddressLine1,
-	a.AddressLine2 AS AddressLine2,
-	a.AddressLine3 AS AddressLine3,
-	a.AddressLine4 AS AddressLine4,
-	a.AddressLine5 AS AddressLine5,
-	a.AddressLine6 AS AddressLine6,
-	a.AddressSearchField AS AddressSearchField,
-	a.AddressType AS AddressType,
-	a.City AS City,
-	a.Country AS Country,
-	a.CreditBureauAddressIndicator AS CreditBureauAddressIndicator,
-	a.CreditBureauResidenceCode AS CreditBureauResidenceCode,
-	a.EmailAddress AS EmailAddress,
-	a.State AS [State],
-	a.TimeZone AS TimeZone,
-	a.WebAddress AS WebAddress,
-	a.ZipCode AS ZipCode
+	n.FirstName,
+	n.LastName,
+	n.MiddleName,
+	n.BirthDate,
+	a.AddressLine1,
+	a.AddressLine2,
+	a.AddressLine3,
+	a.AddressLine4,
+	a.AddressLine5,
+	a.AddressLine6,
+	a.AddressSearchField,
+	a.AddressType,
+	a.City,
+	a.Country,
+	a.CreditBureauAddressIndicator,
+	a.CreditBureauResidenceCode,
+	a.EmailAddress,
+	a.[State],
+	a.TimeZone,
+	a.WebAddress,
+	a.ZipCode
 FROM na
 INNER JOIN n
 	ON na.NameKey = n.NameKey
 LEFT JOIN a
-	ON na.AddressKey = a.AddressKey
-);
+	ON na.AddressKey = a.AddressKey;
+
 ";
 
 		var nameAddressTable = CreateNameAddressesTable();
@@ -79,7 +79,7 @@ LEFT JOIN a
 	public void Scenario_2()
 	{
 		var expected = @"CREATE VIEW Reporting.NameAddresses
-(
+AS
 SELECT
 	na.NameAddressesKey,
 	na.AddressCategory,
@@ -118,7 +118,7 @@ SELECT
 	a.CreditBureauAddressIndicator AS Address_CreditBureauAddressIndicator,
 	a.CreditBureauResidenceCode AS Address_CreditBureauResidenceCode,
 	a.EmailAddress AS Address_EmailAddress,
-	a.State AS Address_State,
+	a.[State] AS Address_State,
 	a.TimeZone AS Address_TimeZone,
 	a.WebAddress AS Address_WebAddress,
 	a.ZipCode AS Address_ZipCode,
@@ -131,8 +131,8 @@ FROM na
 INNER JOIN n
 	ON na.NameKey = n.NameKey
 LEFT JOIN a
-	ON na.AddressKey = a.AddressKey
-);
+	ON na.AddressKey = a.AddressKey;
+
 ";
 
 		var nameAddressTable = CreateNameAddressesTable();
@@ -156,7 +156,7 @@ LEFT JOIN a
 	public void Scenario_3()
 	{
 		var expected = @"CREATE VIEW Reporting.NamesWithAddresses
-(
+AS
 SELECT
 	n.NameKey,
 	n.FirstName,
@@ -164,43 +164,43 @@ SELECT
 	n.MiddleName,
 	n.BirthDate,
 	n.NameId,
-	na.NameAddressesKey AS NameAddressesKey,
-	na.AddressCategory AS AddressCategory,
-	na.AddressNumber AS AddressNumber,
-	na.AlternateNameNumber AS AlternateNameNumber,
-	na.AlternateNameType AS AlternateNameType,
-	na.NotePadId AS NotePadId,
-	na.SequenceNumber AS SequenceNumber,
-	na.WireEnabledIndicator AS WireEnabledIndicator,
-	na.IndChgsLastModifiedDateTime AS IndChgsLastModifiedDateTime,
-	na.IndChgsLastModifiedByUserId AS IndChgsLastModifiedByUserId,
-	na.AddressKey AS AddressKey,
-	na.NotePadKey AS NotePadKey,
-	na.LastImportRunId AS LastImportRunId,
-	na.LastImportDateTime AS LastImportDateTime,
-	a.AddressLine1 AS AddressLine1,
-	a.AddressLine2 AS AddressLine2,
-	a.AddressLine3 AS AddressLine3,
-	a.AddressLine4 AS AddressLine4,
-	a.AddressLine5 AS AddressLine5,
-	a.AddressLine6 AS AddressLine6,
-	a.AddressSearchField AS AddressSearchField,
-	a.AddressType AS AddressType,
-	a.City AS City,
-	a.Country AS Country,
-	a.CreditBureauAddressIndicator AS CreditBureauAddressIndicator,
-	a.CreditBureauResidenceCode AS CreditBureauResidenceCode,
-	a.EmailAddress AS EmailAddress,
-	a.State AS [State],
-	a.TimeZone AS TimeZone,
-	a.WebAddress AS WebAddress,
-	a.ZipCode AS ZipCode
+	na.NameAddressesKey,
+	na.AddressCategory,
+	na.AddressNumber,
+	na.AlternateNameNumber,
+	na.AlternateNameType,
+	na.NotePadId,
+	na.SequenceNumber,
+	na.WireEnabledIndicator,
+	na.IndChgsLastModifiedDateTime,
+	na.IndChgsLastModifiedByUserId,
+	na.AddressKey,
+	na.NotePadKey,
+	na.LastImportRunId,
+	na.LastImportDateTime,
+	a.AddressLine1,
+	a.AddressLine2,
+	a.AddressLine3,
+	a.AddressLine4,
+	a.AddressLine5,
+	a.AddressLine6,
+	a.AddressSearchField,
+	a.AddressType,
+	a.City,
+	a.Country,
+	a.CreditBureauAddressIndicator,
+	a.CreditBureauResidenceCode,
+	a.EmailAddress,
+	a.[State],
+	a.TimeZone,
+	a.WebAddress,
+	a.ZipCode
 FROM n
 LEFT JOIN na
 	ON n.NameId = na.NameId
 LEFT JOIN a
-	ON n.NameId = a.NameId
-);
+	ON n.NameId = a.NameId;
+
 ";
 
 		var nameAddressTable = CreateNameAddressesTable();
@@ -224,7 +224,7 @@ LEFT JOIN a
 	public void Scenario_4()
 	{
 		var expected = @"CREATE VIEW Reporting.NamesWithAddresses
-(
+AS
 SELECT
 	n.NameKey,
 	n.FirstName,
@@ -232,43 +232,43 @@ SELECT
 	n.MiddleName,
 	n.BirthDate,
 	n.NameId,
-	na.NameAddressesKey AS NameAddressesKey,
-	na.AddressCategory AS AddressCategory,
-	na.AddressNumber AS AddressNumber,
-	na.AlternateNameNumber AS AlternateNameNumber,
-	na.AlternateNameType AS AlternateNameType,
-	na.NotePadId AS NotePadId,
-	na.SequenceNumber AS SequenceNumber,
-	na.WireEnabledIndicator AS WireEnabledIndicator,
-	na.IndChgsLastModifiedDateTime AS IndChgsLastModifiedDateTime,
-	na.IndChgsLastModifiedByUserId AS IndChgsLastModifiedByUserId,
-	na.AddressKey AS AddressKey,
-	na.NotePadKey AS NotePadKey,
-	na.LastImportRunId AS LastImportRunId,
-	na.LastImportDateTime AS LastImportDateTime,
-	a.AddressLine1 AS AddressLine1,
-	a.AddressLine2 AS AddressLine2,
-	a.AddressLine3 AS AddressLine3,
-	a.AddressLine4 AS AddressLine4,
-	a.AddressLine5 AS AddressLine5,
-	a.AddressLine6 AS AddressLine6,
-	a.AddressSearchField AS AddressSearchField,
-	a.AddressType AS AddressType,
-	a.City AS City,
-	a.Country AS Country,
-	a.CreditBureauAddressIndicator AS CreditBureauAddressIndicator,
-	a.CreditBureauResidenceCode AS CreditBureauResidenceCode,
-	a.EmailAddress AS EmailAddress,
-	a.State AS [State],
-	a.TimeZone AS TimeZone,
-	a.WebAddress AS WebAddress,
-	a.ZipCode AS ZipCode
+	na.NameAddressesKey,
+	na.AddressCategory,
+	na.AddressNumber,
+	na.AlternateNameNumber,
+	na.AlternateNameType,
+	na.NotePadId,
+	na.SequenceNumber,
+	na.WireEnabledIndicator,
+	na.IndChgsLastModifiedDateTime,
+	na.IndChgsLastModifiedByUserId,
+	na.AddressKey,
+	na.NotePadKey,
+	na.LastImportRunId,
+	na.LastImportDateTime,
+	a.AddressLine1,
+	a.AddressLine2,
+	a.AddressLine3,
+	a.AddressLine4,
+	a.AddressLine5,
+	a.AddressLine6,
+	a.AddressSearchField,
+	a.AddressType,
+	a.City,
+	a.Country,
+	a.CreditBureauAddressIndicator,
+	a.CreditBureauResidenceCode,
+	a.EmailAddress,
+	a.[State],
+	a.TimeZone,
+	a.WebAddress,
+	a.ZipCode
 FROM n
 LEFT JOIN na
 	ON n.NameId = na.NameId
 LEFT JOIN a
-	ON na.AddressKey = a.AddressKey
-);
+	ON na.AddressKey = a.AddressKey;
+
 ";
 
 		var nameAddressTable = CreateNameAddressesTable();

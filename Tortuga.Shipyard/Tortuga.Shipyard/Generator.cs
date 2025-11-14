@@ -26,16 +26,16 @@ public abstract class Generator
 	public HashSet<string> Keywords { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>
-	/// If true, identifiers will be converted into snake_case.
-	/// An underscore will be added between each lowercase-uppercase pair, then all uppercases will be converted into lowercase.
-	/// </summary>
-	public bool UseSnakeCase { get; set; }
-
-	/// <summary>
 	/// Gets or sets the number of spaced to use per logical tab. If null, an actual tab will be used.
 	/// </summary>
 	/// <value>The size of the tab.</value>
 	public int? TabSize { get; set; }
+
+	/// <summary>
+	/// If true, identifiers will be converted into snake_case.
+	/// An underscore will be added between each lowercase-uppercase pair, then all uppercases will be converted into lowercase.
+	/// </summary>
+	public bool UseSnakeCase { get; set; }
 
 	/// <summary>
 	/// Builds the table.
@@ -144,7 +144,7 @@ public abstract class Generator
 			var express = new List<string>();
 			for (int i = 0; i < source.LeftJoinColumns.Count; i++)
 			{
-				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.Any(o => o.ColumnName == source.LeftJoinColumns[i]));
+				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.OfType<ViewColumn>().Any(o => o.ColumnName == source.LeftJoinColumns[i]));
 				if (parentTable == null)
 					throw new InvalidOperationException($"Unable to find a source that contains column {source.LeftJoinColumns[i]}.");
 				express.Add($"{EscapeIdentifier(parentTable.Alias ?? parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
@@ -152,6 +152,9 @@ public abstract class Generator
 			source.JoinExpression = string.Join(" AND ", express);
 		}
 	}
+
+	[return: NotNullIfNotNull(nameof(identifier))]
+	public abstract string? EscapeIdentifier(string? identifier);
 
 	/// <summary>
 	/// Escapes text for use as a string in SQL.
@@ -231,7 +234,4 @@ public abstract class Generator
 
 		return result;
 	}
-
-	[return: NotNullIfNotNull(nameof(identifier))]
-	public abstract string? EscapeIdentifier(string? identifier);
 }

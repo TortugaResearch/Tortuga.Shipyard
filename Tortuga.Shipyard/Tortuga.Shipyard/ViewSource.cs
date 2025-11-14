@@ -20,7 +20,7 @@ public class ViewSource : ModelBase
 	/// </summary>
 	public string? Alias { get => Get<string?>(); set => Set(value); }
 
-	public List<OutputColumn> Outputs => GetNew<List<OutputColumn>>();
+	public List<OutputColumnBase> Outputs => GetNew<List<OutputColumnBase>>();
 
 	/// <summary>
 	/// Gets or sets the schema name of the table.
@@ -40,19 +40,30 @@ public class ViewSource : ModelBase
 	/// <param name="columnName">The column name.</param>
 	public ViewSource AddColumn(string columnName)
 	{
-		Outputs.Add(new(columnName));
+		Outputs.Add(new ViewColumn(columnName));
+		return this;
+	}
+
+	/// <summary>
+	/// Adds an output column based on the source table or view..
+	/// </summary>
+	/// <param name="columnName">The column name.</param>
+	/// <param name="outputColumnName"></param>
+	public ViewSource AddColumn(string columnName, string outputColumnName)
+	{
+		Outputs.Add(new ViewColumn(columnName, outputColumnName));
 		return this;
 	}
 
 	/// <summary>
 	/// Adds an output column based on an expression.
 	/// </summary>
-	/// <param name="columnName">Name of the column as it will be exposed by the view.</param>
 	/// <param name="expression">The expression.</param>
+	/// <param name="outputColumnName">Name of the column as it will be exposed by the view.</param>
 	/// <remarks>Use {0} as a placeholder for the table or view's alias.</remarks>
-	public ViewSource AddExpression(string columnName, string expression)
+	public ViewSource AddExpression(string expression, string outputColumnName)
 	{
-		Outputs.Add(new(columnName, expression));
+		Outputs.Add(new ExpressionColumn(expression, outputColumnName));
 		return this;
 	}
 }

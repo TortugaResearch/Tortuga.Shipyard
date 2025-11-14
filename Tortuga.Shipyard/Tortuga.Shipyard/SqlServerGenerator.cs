@@ -21,7 +21,7 @@ public class SqlServerGenerator : Generator
 	/// </summary>
 	static readonly ImmutableHashSet<string> s_KeyWords = ImmutableHashSet.Create("ACTION", "ADD", "ADMIN", "AFTER", "AGGREGATE", "ALIAS", "ALL", "ALLOCATE", "ALTER", "AND", "ANY", "ARE", "ARRAY", "AS", "ASC", "ASSERTION", "AT", "AUTHORIZATION", "BACKUP", "BEFORE", "BEGIN", "BETWEEN", "BINARY", "BIT", "BLOB", "BOOLEAN", "BOTH", "BREADTH", "BREAK", "BROWSE", "BSOLUTE", "BULK", "BY", "CALL", "CASCADE", "CASCADED", "CASE", "CAST", "CATALOG", "CHAR", "CHARACTER", "CHECK", "CHECKPOINT", "CLASS", "CLOB", "CLOSE", "CLUSTERED", "COALESCE", "COLLATE", "COLLATION", "COLUMN", "COMMIT", "COMPLETION", "COMPUTE", "CONNECT", "CONNECTION", "CONSTRAINT", "CONSTRAINTS", "CONSTRUCTOR", "CONTAINS", "CONTAINSTABLE", "CONTINUE", "CONVERT", "CORRESPONDING", "CREATE", "CROSS", "CUBE", "CURRENT", "CURRENT_DATE", "CURRENT_PATH", "CURRENT_ROLE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR", "CYCLE", "DATA", "DATABASE", "DATE", "DAY", "DBCC", "DEALLOCATE", "DEC", "DECIMAL", "DECLARE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DENY", "DEPTH", "DEREF", "DESC", "DESCRIBE", "DESCRIPTOR", "DESTROY", "DESTRUCTOR", "DETERMINISTIC", "DIAGNOSTICS", "DICTIONARY", "DISCONNECT", "DISK", "DISTINCT", "DISTRIBUTED", "DOMAIN", "DOUBLE", "DROP", "DUMMY", "DUMP", "DYNAMIC", "EACH", "ELSE", "END", "END - EXEC", "EQUALS", "ERRLVL", "ESCAPE", "EVERY", "EXCEPT", "EXCEPTION", "EXEC", "EXECUTE", "EXISTS", "EXIT", "EXTERNAL", "FALSE", "FETCH", "FILE", "FILLFACTOR", "FIRST", "FLOAT", "FOR", "FOREIGN", "FOUND", "FREE", "FREETEXT", "FREETEXTTABLE", "FROM", "FULL", "FUNCTION", "GENERAL", "GET", "GLOBAL", "GO", "GOTO", "GRANT", "GROUP", "GROUPING", "HAVING", "HOLDLOCK", "HOST", "HOUR", "IDENTITY", "IDENTITY_INSERT", "IDENTITYCOL", "IF", "IGNORE", "IMMEDIATE", "IN", "INDEX", "INDICATOR", "INITIALIZE", "INITIALLY", "INNER", "INOUT", "INPUT", "INSERT", "INT", "INTEGER", "INTERSECT", "INTERVAL", "INTO", "IS", "ISOLATION", "ITERATE", "JOIN", "KEY", "KILL", "LANGUAGE", "LARGE", "LAST", "LATERAL", "LEADING", "LEFT", "LESS", "LEVEL", "LIKE", "LIMIT", "LINENO", "LOAD", "LOCAL", "LOCALTIME", "LOCALTIMESTAMP", "LOCATOR", "MAP", "MATCH", "MINUTE", "MODIFIES", "MODIFY", "MODULE", "MONTH", "NAMES", "NATIONAL", "NATURAL", "NCHAR", "NCLOB", "NEW", "NEXT", "NO", "NOCHECK", "NONCLUSTERED", "NONE", "NOT", "NULL", "NULLIF", "NUMERIC", "OBJECT", "OF", "OFF", "OFFSETS", "OLD", "ON", "ONLY", "OPEN", "OPENDATASOURCE", "OPENQUERY", "OPENROWSET", "OPENXML", "OPERATION", "OPTION", "OR", "ORDER", "ORDINALITY", "OUT", "OUTER", "OUTPUT", "OVER", "PAD", "PARAMETER", "PARAMETERS", "PARTIAL", "PATH", "PERCENT", "PLAN", "POSTFIX", "PRECISION", "PREFIX", "PREORDER", "PREPARE", "PRESERVE", "PRIMARY", "PRINT", "PRIOR", "PRIVILEGES", "PROC", "PROCEDURE", "PUBLIC", "RAISERROR", "READ", "READS", "READTEXT", "REAL", "RECONFIGURE", "RECURSIVE", "REF", "REFERENCES", "REFERENCING", "RELATIVE", "REPLICATION", "RESTORE", "RESTRICT", "RESULT", "RETURN", "RETURNS", "REVOKE", "RIGHT", "ROLE", "ROLLBACK", "ROLLUP", "ROUTINE", "ROW", "ROWCOUNT", "ROWGUIDCOL", "ROWS", "RULE", "SAVE", "SAVEPOINT", "SCHEMA", "SCOPE", "SCROLL", "SEARCH", "SECOND", "SECTION", "SELECT", "SEQUENCE", "SESSION", "SESSION_USER", "SET", "SETS", "SETUSER", "SHUTDOWN", "SIZE", "SMALLINT", "SOME", "SPACE", "SPECIFIC", "SPECIFICTYPE", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "START", "STATE", "STATEMENT", "STATIC", "STATISTICS", "STRUCTURE", "SYSTEM_USER", "TABLE", "TEMPORARY", "TERMINATE", "TEXTSIZE", "THAN", "THEN", "TIME", "TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TO", "TOP", "TRAILING", "TRAN", "TRANSACTION", "TRANSLATION", "TREAT", "TRIGGER", "TRUE", "TRUNCATE", "TSEQUAL", "UNDER", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE", "UPDATETEXT", "USAGE", "USE", "USER", "USING", "VALUE", "VALUES", "VARCHAR", "VARIABLE", "VARYING", "VIEW", "WAITFOR", "WHEN", "WHENEVER", "WHERE", "WHILE", "WITH", "WITHOUT", "WORK", "WRITE", "WRITETEXT", "YEAR", "ZONE");
 
-	FrozenSet<SqlDbType> s_IdentityColumnTypes = [SqlDbType.SmallInt, SqlDbType.Int, SqlDbType.BigInt];
+	readonly FrozenSet<SqlDbType> s_IdentityColumnTypes = [SqlDbType.SmallInt, SqlDbType.Int, SqlDbType.BigInt];
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SqlServerGenerator"/> class.
@@ -78,7 +78,6 @@ public class SqlServerGenerator : Generator
 			else
 				nullString = "NOT NULL" + hiddenString;
 
-
 			output.Append($"\t{EscapeIdentifier(column.ColumnName)} {column.CalculateSqlServerFullType()} {nullString}");
 
 			if (column.IsPrimaryKey && !table.HasCompoundPrimaryKey)
@@ -97,7 +96,6 @@ public class SqlServerGenerator : Generator
 				output.Append(" UNIQUE");
 			}
 
-
 			var defaultValue = column.Default;
 			if (defaultValue.IsNullOrEmpty())
 			{
@@ -107,18 +105,18 @@ public class SqlServerGenerator : Generator
 					defaultValue = "SYSDATETIME()";
 			}
 
-			if (!column.Default.IsNullOrEmpty())
+			if (!defaultValue.IsNullOrEmpty())
 			{
 				if (!column.DefaultConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.DefaultConstraintName}");
-				output.Append($" DEFAULT {column.Default}");
+				output.Append($" DEFAULT ({defaultValue})");
 			}
 
 			if (!column.Check.IsNullOrEmpty())
 			{
 				if (!column.CheckConstraintName.IsNullOrEmpty())
 					output.Append($" CONSTRAINT {column.CheckConstraintName}");
-				output.Append($" CHECK {column.Check}");
+				output.Append($" CHECK ({column.Check})");
 			}
 
 			if (!column.ReferencedColumn.IsNullOrEmpty())
@@ -136,7 +134,7 @@ public class SqlServerGenerator : Generator
 			output.Append('\t');
 			if (!table.PrimaryKeyConstraintName.IsNullOrEmpty())
 				output.Append($"CONSTRAINT {table.PrimaryKeyConstraintName} ");
-			output.AppendLine($"PRIMARY KEY ({string.Join(",", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
+			output.AppendLine($"PRIMARY KEY ({string.Join(", ", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
 		}
 
 		var rowStart = table.Columns.FirstOrDefault(c => c.IsRowStart);
@@ -146,7 +144,6 @@ public class SqlServerGenerator : Generator
 			output.Append('\t');
 			output.AppendLine($"PERIOD FOR SYSTEM_TIME ({EscapeIdentifier(rowStart.ColumnName)}, {EscapeIdentifier(rowEnd.ColumnName)}),");
 		}
-
 
 		output.Remove(output.Length - 3, 1); //remove trailing comma
 		output.AppendLine(")");
@@ -159,7 +156,6 @@ public class SqlServerGenerator : Generator
 
 		output.Remove(output.Length - 2, 2); //remove trailing line break
 		output.AppendLine(";");
-
 
 		EndBatch(output);
 
@@ -174,7 +170,7 @@ public class SqlServerGenerator : Generator
 			output.AppendLine($"CREATE UNIQUE INDEX {column.UniqueConstraintName} ON {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)}({EscapeIdentifier(column.ColumnName)}) WHERE {EscapeIdentifier(column.ColumnName)} IS NOT NULL;");
 			EndBatch(output);
 		}
-		//TODO: Support nullable unique columns 
+		//TODO: Support nullable unique columns
 		/*
 		*/
 
@@ -236,18 +232,18 @@ public class SqlServerGenerator : Generator
 		var output = new StringBuilder();
 
 		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
-		output.AppendLine("(");
+		output.AppendLine("AS");
 		output.AppendLine("SELECT");
 		foreach (var source in view.Sources)
-		{
 			foreach (var outputColumn in source.Outputs)
-			{
-				if (!outputColumn.Expression.IsNullOrEmpty())
-					output.AppendLine($"\t{string.Format(outputColumn.Expression, EscapeIdentifier(source.Alias ?? source.TableOrViewName))} AS {EscapeIdentifier(outputColumn.ColumnName)},");
-				else
-					output.AppendLine($"\t{EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(outputColumn.ColumnName)},");
-			}
-		}
+				if (outputColumn is ViewColumn vc)
+					if (vc.OutputColumnName.IsNullOrEmpty())
+						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)},");
+					else
+						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)} AS {EscapeIdentifier(vc.OutputColumnName)},");
+				else if (outputColumn is ExpressionColumn ec)
+					output.AppendLine($"{ec.Expression} AS {EscapeIdentifier(ec.OutputColumnName)}");
+
 		output.Remove(output.Length - 3, 1); //remove trailing comma
 
 		{
@@ -270,8 +266,9 @@ public class SqlServerGenerator : Generator
 			if (source.JoinType != JoinType.CrossJoin)
 				output.AppendLine($"\tON {source.JoinExpression}");
 		}
-
-		output.AppendLine(");");
+		output.Remove(output.Length - 2, 2); //remove trailing line break
+		output.AppendLine(";");
+		output.AppendLine();
 
 		return output.ToString();
 	}
@@ -286,7 +283,7 @@ public class SqlServerGenerator : Generator
 			// Convert baseAlias to a string
 			var baseAlias = new string(source.TableOrViewName!.Where(c => char.IsUpper(c)).Select(c => char.ToLower(c, CultureInfo.InvariantCulture)).ToArray());
 			if (baseAlias.Length == 0)
-				baseAlias = source.TableOrViewName!.Substring(0, 1).ToLowerInvariant();
+				baseAlias = source.TableOrViewName![..1].ToLowerInvariant();
 
 			var alias = baseAlias;
 			int counter = 1;
@@ -309,13 +306,35 @@ public class SqlServerGenerator : Generator
 			var express = new List<string>();
 			for (int i = 0; i < source.LeftJoinColumns.Count; i++)
 			{
-				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.Any(o => o.ColumnName == source.LeftJoinColumns[i]));
+				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.OfType<ViewColumn>().Any(o => o.ColumnName == source.LeftJoinColumns[i]));
 				if (parentTable == null)
 					throw new InvalidOperationException($"Unable to find a source that contains column {source.LeftJoinColumns[i]}.");
 				express.Add($"{EscapeIdentifier(parentTable.Alias ?? parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
 			}
 			source.JoinExpression = string.Join(" AND ", express);
 		}
+	}
+
+	/// <summary>
+	/// Escapes the identifier.
+	/// </summary>
+	/// <param name="identifier">The identifier.</param>
+	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
+	[return: NotNullIfNotNull(nameof(identifier))]
+	public override string? EscapeIdentifier(string? identifier)
+	{
+		if (identifier.IsNullOrEmpty())
+			return identifier;
+
+		if (EscapeAllIdentifiers
+				|| Keywords.Contains(identifier)
+				|| Keywords.Contains(identifier)
+				|| identifier.Any(c => !char.IsLetterOrDigit(c) && c != '_')
+				|| char.IsNumber(identifier[0])
+			)
+			return '[' + identifier + ']';
+		else
+			return identifier;
 	}
 
 	/// <summary>
@@ -351,7 +370,7 @@ public class SqlServerGenerator : Generator
 
 		foreach (var column in table.Columns)
 		{
-			if (column.DefaultConstraintName.IsNullOrEmpty() && !column.Default.IsNullOrEmpty())
+			if (column.DefaultConstraintName.IsNullOrEmpty() && column.HasDefault)
 				column.DefaultConstraintName = $"D_{schemaPart}{table.TableName}_{column.ColumnName}";
 
 			if (column.CheckConstraintName.IsNullOrEmpty() && !column.Check.IsNullOrEmpty())
@@ -382,29 +401,6 @@ public class SqlServerGenerator : Generator
 		return result;
 	}
 
-	/// <summary>
-	/// Escapes the identifier.
-	/// </summary>
-	/// <param name="identifier">The identifier.</param>
-	/// <returns>System.Nullable&lt;System.String&gt;.</returns>
-	[return: NotNullIfNotNull(nameof(identifier))]
-	public override string? EscapeIdentifier(string? identifier)
-	{
-		if (identifier.IsNullOrEmpty())
-			return identifier;
-
-
-		if (EscapeAllIdentifiers
-				|| Keywords.Contains(identifier)
-				|| Keywords.Contains(identifier)
-				|| identifier.Any(c => !char.IsLetterOrDigit(c) && c != '_')
-				|| char.IsNumber(identifier[0])
-			)
-			return '[' + identifier + ']';
-		else
-			return identifier;
-	}
-
 	private void EndBatch(StringBuilder output)
 	{
 		if (UseBatchSeperator)
@@ -415,6 +411,4 @@ public class SqlServerGenerator : Generator
 		else
 			output.AppendLine();
 	}
-
-
 }

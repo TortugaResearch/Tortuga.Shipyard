@@ -43,17 +43,17 @@ public class View : ModelBase
 		if (string.IsNullOrEmpty(joinColumn))
 			throw new ArgumentException($"{nameof(joinColumn)} is null or empty.", nameof(joinColumn));
 
-		var result = new JoinedViewSource(nameTable.SchemaName, nameTable.TableName, joinType, new List<string> { joinColumn }, new List<string> { joinColumn });
+		var result = new JoinedViewSource(nameTable.SchemaName, nameTable.TableName, joinType, [joinColumn], [joinColumn]);
 
 		if (joinRules.PrefixColumnAlias == null)
 			foreach (var column in nameTable.Columns.Where(c => c.ColumnName != joinColumn && !ContainsColumn(c.ColumnName)))
-				result.Outputs.Add(new OutputColumn(column.ColumnName, "{0}." + column.ColumnName));
+				result.AddColumn(column.ColumnName);
 		else
 			foreach (var column in nameTable.Columns)
 			{
 				var columnName = joinRules.PrefixColumnAlias + column.ColumnName;
 				if (!ContainsColumn(columnName))
-					result.Outputs.Add(new OutputColumn(columnName, "{0}." + column.ColumnName));
+					result.AddColumn(column.ColumnName, columnName);
 			}
 
 		Sources.Add(result);
@@ -61,6 +61,6 @@ public class View : ModelBase
 
 	bool ContainsColumn(string columnName)
 	{
-		return Sources.Any(s => s.Outputs.Any(c => string.Equals(c.ColumnName, columnName, StringComparison.OrdinalIgnoreCase)));
+		return Sources.Any(s => s.Outputs.OfType<ViewColumn>().Any(c => string.Equals(c.ColumnName, columnName, StringComparison.OrdinalIgnoreCase)));
 	}
 }

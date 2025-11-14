@@ -107,7 +107,7 @@ public class PostgreSqlGenerator : Generator
 			output.Append('\t');
 			if (!table.PrimaryKeyConstraintName.IsNullOrEmpty())
 				output.Append($"CONSTRAINT {table.PrimaryKeyConstraintName} ");
-			output.AppendLine($"PRIMARY KEY ({string.Join(",", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
+			output.AppendLine($"PRIMARY KEY ({string.Join(", ", table.Columns.Where(c => c.IsPrimaryKey).Select(c => EscapeIdentifier(c.ColumnName)))}),");
 		}
 
 		foreach (var column in table.Columns)
@@ -193,18 +193,18 @@ public class PostgreSqlGenerator : Generator
 		var output = new StringBuilder();
 
 		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
-		output.AppendLine("(");
+		output.AppendLine("AS");
 		output.AppendLine("SELECT");
 		foreach (var source in view.Sources)
-		{
 			foreach (var outputColumn in source.Outputs)
-			{
-				if (!outputColumn.Expression.IsNullOrEmpty())
-					output.AppendLine($"\t{string.Format(outputColumn.Expression, EscapeIdentifier(source.Alias ?? source.TableOrViewName))} AS {EscapeIdentifier(outputColumn.ColumnName)},");
-				else
-					output.AppendLine($"\t{EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(outputColumn.ColumnName)},");
-			}
-		}
+				if (outputColumn is ViewColumn vc)
+					if (vc.OutputColumnName.IsNullOrEmpty())
+						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)},");
+					else
+						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)} AS {EscapeIdentifier(vc.OutputColumnName)},");
+				else if (outputColumn is ExpressionColumn ec)
+					output.AppendLine($"{ec.Expression} AS {EscapeIdentifier(ec.OutputColumnName)}");
+
 		output.Remove(output.Length - 3, 1); //remove trailing comma
 
 		{
@@ -227,8 +227,9 @@ public class PostgreSqlGenerator : Generator
 			if (source.JoinType != JoinType.CrossJoin)
 				output.AppendLine($"\tON {source.JoinExpression}");
 		}
-
-		output.AppendLine(");");
+		output.Remove(output.Length - 2, 2); //remove trailing line break
+		output.AppendLine(";");
+		output.AppendLine();
 
 		return output.ToString();
 	}
@@ -287,7 +288,7 @@ public class PostgreSqlGenerator : Generator
 			//if (column.DefaultConstraintName == null && column.Default != null)
 			//	column.DefaultConstraintName = $"D_{columnPart}";
 
-			if (column.CheckConstraintName.IsNullOrEmpty() && !column.Default.IsNullOrEmpty())
+			if (column.CheckConstraintName.IsNullOrEmpty() && column.HasDefault)
 				column.CheckConstraintName = LimitSize($"{schemaPart}{tablePart}_{columnPart}_check");
 
 			if (column.UniqueConstraintName.IsNullOrEmpty() && column.IsUnique)

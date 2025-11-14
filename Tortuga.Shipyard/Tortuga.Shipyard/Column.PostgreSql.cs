@@ -54,41 +54,17 @@ partial class Column : ModelBase
 	/// Gets the SqlDbType for PostgreSQL, converting from DbType if necessary.
 	/// </summary>
 
-	public NpgsqlDbType CalculatePostgreSqlType()
-	{
-		return PostgreSqlType ?? Type switch
-		{
-			DbType.AnsiString => NpgsqlDbType.Varchar,
-			DbType.AnsiStringFixedLength => NpgsqlDbType.Char,
-			DbType.Binary => NpgsqlDbType.Bytea,
-			DbType.Boolean => NpgsqlDbType.Boolean,
-			DbType.Byte => NpgsqlDbType.Bytea,
-			DbType.Currency => NpgsqlDbType.Money,
-			DbType.Date => NpgsqlDbType.Date,
-			DbType.DateTime => NpgsqlDbType.Timestamp,
-			DbType.DateTime2 => NpgsqlDbType.Timestamp,
-			DbType.DateTimeOffset => NpgsqlDbType.TimestampTz,
-			DbType.Decimal => NpgsqlDbType.Numeric,
-			DbType.Double => NpgsqlDbType.Double,
-			DbType.Guid => NpgsqlDbType.Uuid,
-			DbType.Int16 => NpgsqlDbType.Smallint,
-			DbType.Int32 => NpgsqlDbType.Integer,
-			DbType.Int64 => NpgsqlDbType.Bigint,
-			//DbType.Object => NpgsqlDbType,
-			//DbType.SByte => System.Data.NpgsqlDbType  ,
-			DbType.Single => NpgsqlDbType.Real,
-			DbType.String => NpgsqlDbType.Varchar,
-			DbType.StringFixedLength => NpgsqlDbType.Char,
-			DbType.Time => NpgsqlDbType.Time,
-			//DbType.UInt16 => System.Data.NpgsqlDbType  ,
-			//DbType.UInt32 => System.Data.NpgsqlDbType  ,
-			//DbType.UInt64 => System.Data.NpgsqlDbType  ,
-			DbType.VarNumeric => NpgsqlDbType.Numeric,
-			DbType.Xml => NpgsqlDbType.Xml,
+	/// <summary>
+	/// Gets or sets the type override. If not null, this overrides the type name calculated from DbType/PostgreSqlDbType.
+	/// When using this, include any length, precision, or scale values as needed.
+	/// </summary>
+	/// <value>The PostgreSQL type override.</value>
+	public string? PostgreSqlOverride { get => Get<string?>(); set => Set(value); }
 
-			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
-		};
-	}
+	/// <summary>
+	/// Gets or sets the PostgreSQL-specific type of the column.
+	/// </summary>
+	public NpgsqlDbType? PostgreSqlType { get => Get<NpgsqlDbType?>(); set => Set(value); }
 
 	/// <summary>
 	/// Gets the full PostgreSQL type of the column, including length, precision, and scale as appropriate.
@@ -136,15 +112,39 @@ partial class Column : ModelBase
 		};
 	}
 
-	/// <summary>
-	/// Gets or sets the type override. If not null, this overrides the type name calculated from DbType/PostgreSqlDbType.
-	/// When using this, include any length, precision, or scale values as needed.
-	/// </summary>
-	/// <value>The PostgreSQL type override.</value>
-	public string? PostgreSqlOverride { get => Get<string?>(); set => Set(value); }
+	public NpgsqlDbType CalculatePostgreSqlType()
+	{
+		return PostgreSqlType ?? Type switch
+		{
+			DbType.AnsiString => NpgsqlDbType.Varchar,
+			DbType.AnsiStringFixedLength => NpgsqlDbType.Char,
+			DbType.Binary => NpgsqlDbType.Bytea,
+			DbType.Boolean => NpgsqlDbType.Boolean,
+			DbType.Byte => NpgsqlDbType.Bytea,
+			DbType.Currency => NpgsqlDbType.Money,
+			DbType.Date => NpgsqlDbType.Date,
+			DbType.DateTime => NpgsqlDbType.Timestamp,
+			DbType.DateTime2 => NpgsqlDbType.Timestamp,
+			DbType.DateTimeOffset => NpgsqlDbType.TimestampTz,
+			DbType.Decimal => NpgsqlDbType.Numeric,
+			DbType.Double => NpgsqlDbType.Double,
+			DbType.Guid => NpgsqlDbType.Uuid,
+			DbType.Int16 => NpgsqlDbType.Smallint,
+			DbType.Int32 => NpgsqlDbType.Integer,
+			DbType.Int64 => NpgsqlDbType.Bigint,
+			//DbType.Object => NpgsqlDbType,
+			//DbType.SByte => System.Data.NpgsqlDbType  ,
+			DbType.Single => NpgsqlDbType.Real,
+			DbType.String => NpgsqlDbType.Varchar,
+			DbType.StringFixedLength => NpgsqlDbType.Char,
+			DbType.Time => NpgsqlDbType.Time,
+			//DbType.UInt16 => System.Data.NpgsqlDbType  ,
+			//DbType.UInt32 => System.Data.NpgsqlDbType  ,
+			//DbType.UInt64 => System.Data.NpgsqlDbType  ,
+			DbType.VarNumeric => NpgsqlDbType.Numeric,
+			DbType.Xml => NpgsqlDbType.Xml,
 
-	/// <summary>
-	/// Gets or sets the PostgreSQL-specific type of the column.
-	/// </summary>
-	public NpgsqlDbType? PostgreSqlType { get => Get<NpgsqlDbType?>(); set => Set(value); }
+			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
+		};
+	}
 }

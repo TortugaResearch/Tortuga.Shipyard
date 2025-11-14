@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using Tortuga.Anchor;
 using Tortuga.Anchor.Metadata;
 using Tortuga.Anchor.Modeling;
 
@@ -25,6 +26,33 @@ partial class Column : ModelBase
 		SqlServerType = type;
 		IsNullable = isNullable;
 	}
+
+	[CalculatedField($"{nameof(Default)},{nameof(DefaultLocalTime)},{nameof(DefaultUtcTime)}")]
+	public bool HasDefault
+	{
+		get
+		{
+			return !Default.IsNullOrEmpty() || DefaultLocalTime || DefaultUtcTime;
+		}
+	}
+
+	public bool IsHidden { get => Get<bool>(); set => Set(value); }
+
+	public bool IsRowEnd { get => Get<bool>(); set => Set(value); }
+
+	public bool IsRowStart { get => Get<bool>(); set => Set(value); }
+
+	/// <summary>
+	/// Gets or sets the SQL Server-specific type of the column.
+	/// </summary>
+	public SqlDbType? SqlServerType { get => Get<SqlDbType?>(); set => Set(value); }
+
+	/// <summary>
+	/// Gets or sets the type override. If not null, this overrides the type name calculated from DbType/SqlDbType.
+	/// When using this, include any length, precision, or scale values as needed.
+	/// </summary>
+	/// <value>The SQL server type override.</value>
+	public string? SqlServerTypeOverride { get => Get<string?>(); set => Set(value); }
 
 	/// <summary>
 	/// Gets the full SQL Server type of the column, including length, precision, and scale as appropriate.
@@ -117,6 +145,7 @@ partial class Column : ModelBase
 			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
 		};
 	}
+
 	internal Column CloneForHistory()
 	{
 		var result = MetadataCache.Clone(this, CloneOptions.BypassProperties);
@@ -137,22 +166,4 @@ partial class Column : ModelBase
 		result.ReferencedTable = null;
 		return result;
 	}
-
-	/// <summary>
-	/// Gets or sets the SQL Server-specific type of the column.
-	/// </summary>
-	public SqlDbType? SqlServerType { get => Get<SqlDbType?>(); set => Set(value); }
-
-	/// <summary>
-	/// Gets or sets the type override. If not null, this overrides the type name calculated from DbType/SqlDbType.
-	/// When using this, include any length, precision, or scale values as needed.
-	/// </summary>
-	/// <value>The SQL server type override.</value>
-	public string? SqlServerTypeOverride { get => Get<string?>(); set => Set(value); }
-
-	public bool IsRowStart { get => Get<bool>(); set => Set(value); }
-
-	public bool IsRowEnd { get => Get<bool>(); set => Set(value); }
-	public bool IsHidden { get => Get<bool>(); set => Set(value); }
-
 }
