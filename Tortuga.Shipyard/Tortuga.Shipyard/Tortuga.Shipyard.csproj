@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 		<Authors>Jonathan Allen</Authors>
 		<Company>Tortuga Research</Company>
 		<Description>Library for assisting in code generation tasks.</Description>
 		<PackageTags>Database,SQL</PackageTags>
-		<LangVersion>13.0</LangVersion>
+		<LangVersion>14.0</LangVersion>
 		<Deterministic>true</Deterministic>
 		<ImplicitUsings>true</ImplicitUsings>
 		<ProductName>Tortuga Shipyard</ProductName>
@@ -34,10 +34,10 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Npgsql" Version="9.0.3" />
-		<PackageReference Include="System.Collections.Immutable" Version="9.0.4" />
+		<PackageReference Include="Npgsql" Version="9.0.4" />
+		<PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
 		<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-		<PackageReference Include="Tortuga.Anchor" Version="5.0.1" />
+		<PackageReference Include="Tortuga.Anchor" Version="5.1.0" />
 	</ItemGroup>
 
 	<!-- NuGet Packaging Boilerplate-->
