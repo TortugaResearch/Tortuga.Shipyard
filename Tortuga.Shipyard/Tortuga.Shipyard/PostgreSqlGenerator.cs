@@ -180,61 +180,6 @@ public class PostgreSqlGenerator : Generator
 	}
 
 	/// <summary>
-	/// Generates the SQL statement for creating the specified view.
-	/// </summary>
-	/// <param name="view">The view to generate SQL for.</param>
-	/// <returns>The SQL CREATE VIEW statement.</returns>
-	/// <exception cref="System.ArgumentNullException">view</exception>
-	public override string BuildView(View view)
-	{
-		if (view == null)
-			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
-
-		var output = new StringBuilder();
-
-		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
-		output.AppendLine("AS");
-		output.AppendLine("SELECT");
-		foreach (var source in view.Sources)
-			foreach (var outputColumn in source.Outputs)
-				if (outputColumn is ViewColumn vc)
-					if (vc.OutputColumnName.IsNullOrEmpty())
-						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)},");
-					else
-						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)} AS {EscapeIdentifier(vc.OutputColumnName)},");
-				else if (outputColumn is ExpressionColumn ec)
-					output.AppendLine($"{ec.Expression} AS {EscapeIdentifier(ec.OutputColumnName)}");
-
-		output.Remove(output.Length - 3, 1); //remove trailing comma
-
-		{
-			var source = view.Sources[0];
-			output.AppendLine($"FROM {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
-		}
-
-		foreach (JoinedViewSource source in view.Sources.Skip(1))
-		{
-			var joinTypeString = source.JoinType switch
-			{
-				JoinType.InnerJoin => "INNER JOIN",
-				JoinType.LeftJoin => "LEFT JOIN",
-				JoinType.RightJoin => "RIGHT JOIN",
-				JoinType.FullJoin => "FULL OUTER JOIN",
-				JoinType.CrossJoin => "CROSS JOIN",
-				_ => throw new NotSupportedException($"Join type {source.JoinType} is not supported."),
-			};
-			output.AppendLine($"{joinTypeString} {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}");
-			if (source.JoinType != JoinType.CrossJoin)
-				output.AppendLine($"\tON {source.JoinExpression}");
-		}
-		output.Remove(output.Length - 2, 2); //remove trailing line break
-		output.AppendLine(";");
-		output.AppendLine();
-
-		return output.ToString();
-	}
-
-	/// <summary>
 	/// Escapes the identifier.
 	/// </summary>
 	/// <param name="identifier">The identifier.</param>
@@ -311,8 +256,14 @@ public class PostgreSqlGenerator : Generator
 			result = char.ToLowerInvariant(identifier[0]).ToString();
 			for (int i = 1; i < identifier.Length; i++)
 			{
+				//Start a new word if we have an upper case letter preceded by a lower case letter
 				if (char.IsUpper(identifier[i]) && char.IsLower(identifier[i - 1]))
 					result += '_';
+
+				//Start a new word if we have an upper case letter preceded by an upper case letter and followed by a lower case letter
+				if (char.IsUpper(identifier[i]) && char.IsUpper(identifier[i - 1]) && (i + 1 < identifier.Length) && char.IsLower(identifier[i + 1]))
+					result += '_';
+
 				result += char.ToLowerInvariant(identifier[i]);
 			}
 		}

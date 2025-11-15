@@ -50,10 +50,10 @@ SELECT
 	a.TimeZone,
 	a.WebAddress,
 	a.ZipCode
-FROM na
-INNER JOIN n
+FROM Storage.NameAddresses na
+INNER JOIN Storage.Name n
 	ON na.NameKey = n.NameKey
-LEFT JOIN a
+LEFT JOIN Storage.Address a
 	ON na.AddressKey = a.AddressKey;
 
 ";
@@ -127,10 +127,10 @@ SELECT
 	a.LastImportRunId AS Address_LastImportRunId,
 	a.LastImportDateTime AS Address_LastImportDateTime,
 	a.NameId AS Address_NameId
-FROM na
-INNER JOIN n
+FROM Storage.NameAddresses na
+INNER JOIN Storage.Name n
 	ON na.NameKey = n.NameKey
-LEFT JOIN a
+LEFT JOIN Storage.Address a
 	ON na.AddressKey = a.AddressKey;
 
 ";
@@ -195,10 +195,10 @@ SELECT
 	a.TimeZone,
 	a.WebAddress,
 	a.ZipCode
-FROM n
-LEFT JOIN na
+FROM Storage.Name n
+LEFT JOIN Storage.NameAddresses na
 	ON n.NameId = na.NameId
-LEFT JOIN a
+LEFT JOIN Storage.Address a
 	ON n.NameId = a.NameId;
 
 ";
@@ -263,10 +263,10 @@ SELECT
 	a.TimeZone,
 	a.WebAddress,
 	a.ZipCode
-FROM n
-LEFT JOIN na
+FROM Storage.Name n
+LEFT JOIN Storage.NameAddresses na
 	ON n.NameId = na.NameId
-LEFT JOIN a
+LEFT JOIN Storage.Address a
 	ON na.AddressKey = a.AddressKey;
 
 ";

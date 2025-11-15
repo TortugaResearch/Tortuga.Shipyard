@@ -161,8 +161,8 @@ SELECT
 	p1.ProductName,
 	p2.ProductId AS Product2Id,
 	p2.ProductName AS Product2Name
-FROM p1
-CROSS JOIN p2;
+FROM dbo.Product p1
+CROSS JOIN dbo.Product p2;
 
 ";
 
@@ -199,8 +199,8 @@ SELECT
 	t1.Data1,
 	t2.Id AS Id2,
 	t2.Data2
-FROM t1
-FULL OUTER JOIN t2
+FROM dbo.Table1 t1
+FULL OUTER JOIN dbo.Table2 t2
 	ON t1.Id = t2.Id;
 
 ";
@@ -253,8 +253,8 @@ SELECT
 	e.FirstName,
 	e.DepartmentId,
 	d.DepartmentName
-FROM e
-RIGHT JOIN d
+FROM dbo.Employee e
+RIGHT JOIN dbo.Department d
 	ON e.DepartmentId = d.DepartmentId;
 
 ";

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text;
 using Tortuga.Anchor;
 using Tortuga.Anchor.Modeling;
 
@@ -58,7 +59,54 @@ public abstract class Generator
 	/// </summary>
 	/// <param name="view">The view to generate SQL for.</param>
 	/// <returns>The SQL CREATE VIEW statement.</returns>
-	public abstract string BuildView(View view);
+	public string BuildView(View view)
+	{
+		if (view == null)
+			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
+
+		var output = new StringBuilder();
+
+		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
+		output.AppendLine("AS");
+		output.AppendLine("SELECT");
+		foreach (var source in view.Sources)
+			foreach (var outputColumn in source.Outputs)
+				if (outputColumn is ViewColumn vc)
+					if (vc.OutputColumnName.IsNullOrEmpty())
+						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)},");
+					else
+						output.AppendLine($"\t{source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(vc.ColumnName)} AS {EscapeIdentifier(vc.OutputColumnName)},");
+				else if (outputColumn is ExpressionColumn ec)
+					output.AppendLine($"\t{ec.Expression} AS {EscapeIdentifier(ec.OutputColumnName)},");
+
+		output.Remove(output.Length - 3, 1); //remove trailing comma
+
+		{
+			var source = view.Sources[0];
+			output.AppendLine($"FROM {EscapeIdentifier(source.SchemaName)}.{EscapeIdentifier(source.TableOrViewName)} {source.Alias}");
+		}
+
+		foreach (JoinedViewSource source in view.Sources.Skip(1))
+		{
+			var joinTypeString = source.JoinType switch
+			{
+				JoinType.InnerJoin => "INNER JOIN",
+				JoinType.LeftJoin => "LEFT JOIN",
+				JoinType.RightJoin => "RIGHT JOIN",
+				JoinType.FullJoin => "FULL OUTER JOIN",
+				JoinType.CrossJoin => "CROSS JOIN",
+				_ => throw new NotSupportedException($"Join type {source.JoinType} is not supported."),
+			};
+			output.AppendLine($"{joinTypeString} {EscapeIdentifier(source.SchemaName)}.{EscapeIdentifier(source.TableOrViewName)} {source.Alias}");
+			if (source.JoinType != JoinType.CrossJoin)
+				output.AppendLine($"\tON {source.JoinExpression}");
+		}
+		output.Remove(output.Length - 2, 2); //remove trailing line break
+		output.AppendLine(";");
+		output.AppendLine();
+
+		return output.ToString();
+	}
 
 	/// <summary>
 	/// Builds the views.
@@ -147,7 +195,7 @@ public abstract class Generator
 				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.OfType<ViewColumn>().Any(o => o.ColumnName == source.LeftJoinColumns[i]));
 				if (parentTable == null)
 					throw new InvalidOperationException($"Unable to find a source that contains column {source.LeftJoinColumns[i]}.");
-				express.Add($"{EscapeIdentifier(parentTable.Alias ?? parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
+				express.Add($"{parentTable.Alias ?? EscapeIdentifier(parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
 			}
 			source.JoinExpression = string.Join(" AND ", express);
 		}

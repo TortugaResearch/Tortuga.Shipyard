@@ -19,8 +19,8 @@ SELECT
 	e.department_id,
 	e.manager_key,
 	m.manager_name
-FROM e
-LEFT JOIN m
+FROM hr.employee e
+LEFT JOIN hr.manager m
 	ON e.manager_key = m.manager_key;
 
 ";
@@ -53,9 +53,9 @@ SELECT
 	e.""DepartmentId"",
 	e.""ManagerKey"",
 	d.""DepartmentName""
-FROM ""e""
-INNER JOIN ""d""
-	ON ""e"".""DepartmentId"" = ""d"".""DepartmentId"";
+FROM ""HR"".""Employee"" e
+INNER JOIN ""HR"".""Department"" d
+	ON e.""DepartmentId"" = d.""DepartmentId"";
 
 ";
 
@@ -87,8 +87,8 @@ SELECT
 	e.department_id,
 	e.manager_key,
 	d.department_name
-FROM e
-INNER JOIN d
+FROM hr.employee e
+INNER JOIN hr.department d
 	ON e.department_id = d.department_id;
 
 ";
@@ -122,8 +122,8 @@ SELECT
 	e.manager_key,
 	d.department_id AS dept_department_id,
 	d.department_name AS dept_department_name
-FROM e
-INNER JOIN d
+FROM hr.employee e
+INNER JOIN hr.department d
 	ON e.department_id = d.department_id;
 
 ";
