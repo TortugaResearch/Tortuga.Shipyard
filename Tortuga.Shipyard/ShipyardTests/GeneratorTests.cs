@@ -57,34 +57,25 @@ public sealed class GeneratorTests
 	{
 		var generator = new TestGenerator();
 		var view = new View("dbo", "TestView");
+
 		var source1 = new ViewSource("dbo", "Employee");
-		var source2 = new ViewSource("dbo", "Employee");
-		var source3 = new ViewSource("dbo", "Employee");
+		source1.AddColumn("EmployeeId");
+
+		var source2 = new JoinedViewSource("dbo", "Employee", JoinType.LeftJoin, "EmployeeId");
+		source2.AddColumn("EmployeeId");
+
+		var source3 = new JoinedViewSource("dbo", "Employee", JoinType.LeftJoin, "EmployeeId");
+		source3.AddColumn("EmployeeId");
+
 		view.Sources.Add(source1);
 		view.Sources.Add(source2);
 		view.Sources.Add(source3);
 
-		generator.CalculateAliases(view);
+		generator.BuildView(view);
 
 		Assert.AreEqual("e", source1.Alias);
 		Assert.AreEqual("e1", source2.Alias);
 		Assert.AreEqual("e2", source3.Alias);
-	}
-
-	[TestMethod]
-	public void Generator_CalculateAliases_MultipleSources_Test()
-	{
-		var generator = new TestGenerator();
-		var view = new View("dbo", "TestView");
-		var source1 = new ViewSource("dbo", "Employee");
-		var source2 = new ViewSource("dbo", "Department");
-		view.Sources.Add(source1);
-		view.Sources.Add(source2);
-
-		generator.CalculateAliases(view);
-
-		Assert.AreEqual("e", source1.Alias);
-		Assert.AreEqual("d", source2.Alias);
 	}
 
 	[TestMethod]
@@ -95,18 +86,10 @@ public sealed class GeneratorTests
 		var source = new ViewSource("dbo", "employee");
 		view.Sources.Add(source);
 
-		generator.CalculateAliases(view);
+		generator.BuildView(view);
 
 		Assert.IsNotNull(source.Alias);
 		Assert.AreEqual("e", source.Alias);
-	}
-
-	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
-	public void Generator_CalculateAliases_NullView_Test()
-	{
-		var generator = new TestGenerator();
-		generator.CalculateAliases((View)null!);
 	}
 
 	[TestMethod]
@@ -117,7 +100,7 @@ public sealed class GeneratorTests
 		var source = new ViewSource("dbo", "Employee") { Alias = "emp" };
 		view.Sources.Add(source);
 
-		generator.CalculateAliases(view);
+		generator.BuildView(view);
 
 		Assert.AreEqual("emp", source.Alias);
 	}
@@ -130,7 +113,7 @@ public sealed class GeneratorTests
 		var source = new ViewSource("dbo", "Employee");
 		view.Sources.Add(source);
 
-		generator.CalculateAliases(view);
+		generator.BuildView(view);
 
 		Assert.IsNotNull(source.Alias);
 		Assert.AreEqual("e", source.Alias);
@@ -159,18 +142,10 @@ public sealed class GeneratorTests
 		assignmentJoin.AddColumn("AssignmentDate");
 		view.Sources.Add(assignmentJoin);
 
-		generator.CalculateJoinExpressions(view);
+		generator.BuildView(view);
 
 		Assert.IsNotNull(assignmentJoin.JoinExpression);
 		Assert.IsTrue(assignmentJoin.JoinExpression.Contains("AND"));
-	}
-
-	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
-	public void Generator_CalculateJoinExpressions_NullView_Test()
-	{
-		var generator = new TestGenerator();
-		generator.CalculateJoinExpressions((View)null!);
 	}
 
 	[TestMethod]
@@ -195,7 +170,7 @@ public sealed class GeneratorTests
 		departmentJoin.AddColumn("DepartmentName");
 		view.Sources.Add(departmentJoin);
 
-		generator.CalculateJoinExpressions(view);
+		generator.BuildView(view);
 
 		Assert.IsNotNull(departmentJoin.JoinExpression);
 		Assert.AreEqual("e.[DepartmentId] = d.[DepartmentId]", departmentJoin.JoinExpression);

@@ -33,8 +33,6 @@ LEFT JOIN hr.manager m
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -67,8 +65,6 @@ INNER JOIN ""HR"".""Department"" d
 
 		var generator = new PostgreSqlGenerator();
 		generator.EscapeAllIdentifiers = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -101,8 +97,6 @@ INNER JOIN hr.department d
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -137,8 +131,6 @@ INNER JOIN hr.department d
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);

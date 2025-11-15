@@ -67,8 +67,6 @@ LEFT JOIN Storage.Address a
 		view.Join(JoinType.LeftJoin, addressTable, "AddressKey");
 
 		var generator = new SqlServerGenerator();
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -144,8 +142,6 @@ LEFT JOIN Storage.Address a
 		view.Join(JoinType.LeftJoin, addressTable, "AddressKey", new JoinRules { PrefixColumnAlias = addressTable.TableName + "_" });
 
 		var generator = new SqlServerGenerator();
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -212,8 +208,6 @@ LEFT JOIN Storage.Address a
 		view.Join(JoinType.LeftJoin, addressTable, "NameId");
 
 		var generator = new SqlServerGenerator();
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -280,8 +274,6 @@ LEFT JOIN Storage.Address a
 		view.Join(JoinType.LeftJoin, addressTable, "AddressKey");
 
 		var generator = new SqlServerGenerator();
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);

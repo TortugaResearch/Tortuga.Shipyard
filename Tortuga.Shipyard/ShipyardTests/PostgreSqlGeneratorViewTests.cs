@@ -37,8 +37,6 @@ LEFT JOIN hr.manager m
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -71,7 +69,6 @@ FROM hr.employee e;
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -153,8 +150,6 @@ CROSS JOIN hr.department d;
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -179,7 +174,6 @@ FROM ""HR"".""Employee"" e;
 
 		var generator = new PostgreSqlGenerator();
 		generator.EscapeAllIdentifiers = true;
-		generator.CalculateAliases(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -206,7 +200,6 @@ FROM hr.employee e;
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -237,8 +230,6 @@ FULL OUTER JOIN hr.department d
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -269,8 +260,6 @@ INNER JOIN hr.department d
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -301,8 +290,6 @@ LEFT JOIN hr.manager m
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -333,8 +320,6 @@ RIGHT JOIN hr.department d
 
 		var generator = new PostgreSqlGenerator();
 		generator.UseSnakeCase = true;
-		generator.CalculateAliases(view);
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);

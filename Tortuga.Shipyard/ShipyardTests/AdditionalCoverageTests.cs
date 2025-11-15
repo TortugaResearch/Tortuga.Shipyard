@@ -97,7 +97,7 @@ public sealed class AdditionalCoverageTests : TestsBase
 
 		try
 		{
-			generator.CalculateJoinExpressions(view);
+			generator.BuildView(view);
 			Assert.Fail("Expected InvalidOperationException");
 		}
 		catch (InvalidOperationException ex)
@@ -222,7 +222,6 @@ FULL OUTER JOIN dbo.Table2 t2
 		view.Sources.Add(fullJoinSource);
 
 		var generator = new SqlServerGenerator();
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);
@@ -276,7 +275,6 @@ RIGHT JOIN dbo.Department d
 		view.Sources.Add(rightJoinSource);
 
 		var generator = new SqlServerGenerator();
-		generator.CalculateJoinExpressions(view);
 		var output = generator.BuildView(view);
 
 		Debug.WriteLine(output);

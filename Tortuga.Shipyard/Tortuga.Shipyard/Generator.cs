@@ -64,6 +64,9 @@ public abstract class Generator
 		if (view == null)
 			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
 
+		CalculateAliases(view);
+		CalculateJoinExpressions(view);
+
 		var output = new StringBuilder();
 
 		output.AppendLine($"CREATE VIEW {EscapeIdentifier(view.SchemaName)}.{EscapeIdentifier(view.ViewName)}");
@@ -121,84 +124,6 @@ public abstract class Generator
 
 		foreach (var item in views)
 			yield return BuildView(item);
-	}
-
-	/// <summary>
-	/// Calculates and assigns aliases for sources in the specified view.
-	/// </summary>
-	/// <param name="view">The view for which to calculate aliases.</param>
-	public virtual void CalculateAliases(View view)
-	{
-		if (view == null)
-			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
-
-		foreach (var source in view.Sources.Where(v => v.Alias.IsNullOrEmpty()))
-		{
-			// Convert baseAlias to a string
-			var baseAlias = new string(source.TableOrViewName!.Where(c => char.IsUpper(c)).Select(c => char.ToLower(c, CultureInfo.InvariantCulture)).ToArray());
-			if (baseAlias.Length == 0)
-				baseAlias = source.TableOrViewName!.Substring(0, 1).ToLowerInvariant();
-
-			var alias = baseAlias;
-			int counter = 1;
-			while (view.Sources.Any(s => s != source && s.Alias == alias))
-			{
-				alias = baseAlias + counter.ToString();
-				counter++;
-			}
-			source.Alias = alias;
-		}
-	}
-
-	/// <summary>
-	/// Calculates the aliases.
-	/// </summary>
-	/// <param name="views">The views.</param>
-	/// <exception cref="System.ArgumentNullException">views</exception>
-	public void CalculateAliases(IEnumerable<View> views)
-	{
-		if (views == null)
-			throw new ArgumentNullException(nameof(views), $"{nameof(views)} is null.");
-
-		foreach (var item in views)
-			CalculateAliases(item);
-	}
-
-	/// <summary>
-	/// Calculates the join expressions.
-	/// </summary>
-	/// <param name="views">The views.</param>
-	/// <exception cref="System.ArgumentNullException">views</exception>
-	public void CalculateJoinExpressions(IEnumerable<View> views)
-	{
-		if (views == null)
-			throw new ArgumentNullException(nameof(views), $"{nameof(views)} is null.");
-
-		foreach (var view in views)
-			CalculateJoinExpressions(view);
-	}
-
-	/// <summary>
-	/// Calculates and assigns join expressions for joined sources in the specified view.
-	/// </summary>
-	/// <param name="view">The view for which to calculate join expressions.</param>
-	public virtual void CalculateJoinExpressions(View view)
-	{
-		if (view == null)
-			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
-
-		foreach (var source in view.Sources.OfType<JoinedViewSource>().Where(v => v.JoinExpression == null))
-		{
-			var express = new List<string>();
-			for (int i = 0; i < source.LeftJoinColumns.Count; i++)
-			{
-				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.OfType<ViewColumn>().Any(o => o.ColumnName == source.LeftJoinColumns[i]));
-				if (parentTable == null)
-					throw new InvalidOperationException($"Unable to find a source that contains column {source.LeftJoinColumns[i]}.");
-				express.Add($"{parentTable.Alias ?? EscapeIdentifier(parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
-			}
-			source.JoinExpression = string.Join(" AND ", express);
-		}
 	}
 
 	[return: NotNullIfNotNull(nameof(identifier))]
@@ -281,5 +206,55 @@ public abstract class Generator
 		}
 
 		return result;
+	}
+
+	/// <summary>
+	/// Calculates and assigns aliases for sources in the specified view.
+	/// </summary>
+	/// <param name="view">The view for which to calculate aliases.</param>
+	protected virtual void CalculateAliases(View view)
+	{
+		if (view == null)
+			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
+
+		foreach (var source in view.Sources.Where(v => v.Alias.IsNullOrEmpty()))
+		{
+			// Convert baseAlias to a string
+			var baseAlias = new string(source.TableOrViewName!.Where(c => char.IsUpper(c)).Select(c => char.ToLower(c, CultureInfo.InvariantCulture)).ToArray());
+			if (baseAlias.Length == 0)
+				baseAlias = source.TableOrViewName!.Substring(0, 1).ToLowerInvariant();
+
+			var alias = baseAlias;
+			int counter = 1;
+			while (view.Sources.Any(s => s != source && s.Alias == alias))
+			{
+				alias = baseAlias + counter.ToString();
+				counter++;
+			}
+			source.Alias = alias;
+		}
+	}
+
+	/// <summary>
+	/// Calculates and assigns join expressions for joined sources in the specified view.
+	/// </summary>
+	/// <param name="view">The view for which to calculate join expressions.</param>
+	protected virtual void CalculateJoinExpressions(View view)
+	{
+		if (view == null)
+			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
+
+		foreach (var source in view.Sources.OfType<JoinedViewSource>().Where(v => v.JoinExpression == null))
+		{
+			var express = new List<string>();
+			for (int i = 0; i < source.LeftJoinColumns.Count; i++)
+			{
+				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.OfType<ViewColumn>().Any(o => o.ColumnName == source.LeftJoinColumns[i]));
+				if (parentTable == null)
+					throw new InvalidOperationException($"Unable to find a source that contains column {source.LeftJoinColumns[i]}.");
+				express.Add($"{parentTable.Alias ?? EscapeIdentifier(parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {source.Alias ?? EscapeIdentifier(source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
+			}
+			source.JoinExpression = string.Join(" AND ", express);
+		}
 	}
 }

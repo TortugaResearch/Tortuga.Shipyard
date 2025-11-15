@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Text;
 using Tortuga.Anchor;
 
@@ -11,9 +10,9 @@ namespace Tortuga.Shipyard;
 
 /// <summary>
 /// Class SqlServerGenerator.
-/// Implements the <see cref="Tortuga.Shipyard.Generator" />
+/// Implements the <see cref="Generator" />
 /// </summary>
-/// <seealso cref="Tortuga.Shipyard.Generator" />
+/// <seealso cref="Generator" />
 public class SqlServerGenerator : Generator
 {
 	/// <summary>
@@ -224,48 +223,6 @@ public class SqlServerGenerator : Generator
 		return output.ToString();
 	}
 
-	public override void CalculateAliases(View view)
-	{
-		if (view == null)
-			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
-
-		foreach (var source in view.Sources.Where(v => v.Alias.IsNullOrEmpty()))
-		{
-			// Convert baseAlias to a string
-			var baseAlias = new string(source.TableOrViewName!.Where(c => char.IsUpper(c)).Select(c => char.ToLower(c, CultureInfo.InvariantCulture)).ToArray());
-			if (baseAlias.Length == 0)
-				baseAlias = source.TableOrViewName![..1].ToLowerInvariant();
-
-			var alias = baseAlias;
-			int counter = 1;
-			while (view.Sources.Any(s => s != source && s.Alias == alias))
-			{
-				alias = baseAlias + counter.ToString();
-				counter++;
-			}
-			source.Alias = alias;
-		}
-	}
-
-	public override void CalculateJoinExpressions(View view)
-	{
-		if (view == null)
-			throw new ArgumentNullException(nameof(view), $"{nameof(view)} is null.");
-
-		foreach (var source in view.Sources.OfType<JoinedViewSource>().Where(v => v.JoinExpression.IsNullOrEmpty()))
-		{
-			var express = new List<string>();
-			for (int i = 0; i < source.LeftJoinColumns.Count; i++)
-			{
-				var parentTable = view.Sources.FirstOrDefault(s => s.Outputs.OfType<ViewColumn>().Any(o => o.ColumnName == source.LeftJoinColumns[i]));
-				if (parentTable == null)
-					throw new InvalidOperationException($"Unable to find a source that contains column {source.LeftJoinColumns[i]}.");
-				express.Add($"{EscapeIdentifier(parentTable.Alias ?? parentTable.TableOrViewName)}.{EscapeIdentifier(source.LeftJoinColumns[i])} = {EscapeIdentifier(source.Alias ?? source.TableOrViewName)}.{EscapeIdentifier(source.RightJoinColumns[i])}");
-			}
-			source.JoinExpression = string.Join(" AND ", express);
-		}
-	}
-
 	/// <summary>
 	/// Escapes the identifier.
 	/// </summary>
@@ -352,7 +309,7 @@ public class SqlServerGenerator : Generator
 		return result;
 	}
 
-	private void EndBatch(StringBuilder output)
+	void EndBatch(StringBuilder output)
 	{
 		if (UseBatchSeperator)
 		{
