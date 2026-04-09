@@ -24,6 +24,8 @@ public class PostgreSqlGenerator : Generator
 		Keywords.AddRange(s_KeyWords);
 	}
 
+	public bool CaseInsensitive { get; set; }
+
 	/// <summary>
 	/// Gets or sets a value indicating whether to include schema name when generating a constraint name.
 	/// </summary>
@@ -55,7 +57,17 @@ public class PostgreSqlGenerator : Generator
 			else
 				nullString = "NOT NULL";
 
-			output.Append($"\t{EscapeIdentifier(column.ColumnName)} {column.CalculatePostgreSqlFullType()} {nullString}".TrimEnd());
+
+			var collateString = column.CalculatePostgreSqlType() switch
+			{
+				NpgsqlTypes.NpgsqlDbType.Char or 
+				NpgsqlTypes.NpgsqlDbType.Text or 
+				NpgsqlTypes.NpgsqlDbType.Varchar 
+					=> CaseInsensitive ? " COLLATE case_insensitive" : "",
+				_ => ""
+			};
+			 
+			output.Append($"\t{EscapeIdentifier(column.ColumnName)} {column.CalculatePostgreSqlFullType()} {nullString}{collateString}".TrimEnd());
 
 			//if (column.IsPrimaryKey && !table.HasCompoundPrimaryKey)
 			//{
