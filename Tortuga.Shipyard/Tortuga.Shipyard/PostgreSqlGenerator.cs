@@ -44,7 +44,10 @@ public class PostgreSqlGenerator : Generator
 
 		var output = new StringBuilder();
 
-		output.AppendLine($"CREATE TABLE {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)}");
+		if (table.IsTemporaryTable)
+			output.AppendLine($"CREATE TEMPORARY TABLE {EscapeIdentifier(table.TableName)}");
+		else
+			output.AppendLine($"CREATE TABLE {EscapeIdentifier(table.SchemaName)}.{EscapeIdentifier(table.TableName)}");
 		output.AppendLine("(");
 
 		foreach (var column in table.Columns)

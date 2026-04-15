@@ -20,6 +20,8 @@ public class Table : ModelBase
 		TableName = tableName;
 	}
 
+	public bool IsTemporaryTable { get; set;  }
+
 	/// <summary>
 	/// Gets or sets the clustered index.
 	/// </summary>
@@ -131,6 +133,17 @@ public class Table : ModelBase
 		foreach (var column in Columns)
 		{
 			result.Columns.Add(column.CloneForHistory());
+		}
+		return result;
+	}
+
+	public Table CreateTemporaryTable(string tempTableName)
+	{
+		var result = new Table("", tempTableName);
+		result.IsTemporaryTable = true;
+		foreach (var column in Columns)
+		{
+			result.Columns.Add(column.CloneForTempTable());
 		}
 		return result;
 	}

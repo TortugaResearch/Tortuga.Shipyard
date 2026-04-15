@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using Tortuga.Anchor.Metadata;
 using Tortuga.Anchor.Modeling;
 
 namespace Tortuga.Shipyard;
@@ -240,5 +241,47 @@ public partial class Column : ModelBase
 	{
 		Properties.Add(new(name, value));
 		return this;
+	}
+
+	internal Column CloneForHistory()
+	{
+		var result = MetadataCache.Clone(this, CloneOptions.BypassProperties);
+		result.IsPrimaryKey = false;
+		result.IsIdentity = false;
+		result.IsRowEnd = false;
+		result.IsRowStart = false;
+		result.Default = null;
+		result.DefaultLocalTime = false;
+		result.DefaultUtcTime = false;
+		result.IsHidden = false;
+		result.CheckConstraintName = null;
+		result.Check = null;
+		result.IsUnique = false;
+		result.UniqueConstraintName = null;
+		result.ReferencedColumn = null;
+		result.ReferencedSchema = null;
+		result.ReferencedTable = null;
+		return result;
+	}
+
+	internal Column CloneForTempTable()
+	{
+		var result = MetadataCache.Clone(this, CloneOptions.BypassProperties);
+		//result.IsPrimaryKey = false;
+		//result.IsIdentity = false;
+		result.IsRowEnd = false;
+		result.IsRowStart = false;
+		result.Default = null;
+		result.DefaultLocalTime = false;
+		result.DefaultUtcTime = false;
+		result.IsHidden = false;
+		result.CheckConstraintName = null;
+		//result.Check = null;
+		//result.IsUnique = false;
+		result.UniqueConstraintName = null;
+		result.ReferencedColumn = null;
+		result.ReferencedSchema = null;
+		result.ReferencedTable = null;
+		return result;
 	}
 }
