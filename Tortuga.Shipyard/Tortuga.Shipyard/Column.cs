@@ -282,6 +282,7 @@ public partial class Column : ModelBase
 		result.ReferencedColumn = null;
 		result.ReferencedSchema = null;
 		result.ReferencedTable = null;
+		result.Description = null;
 		return result;
 	}
 }

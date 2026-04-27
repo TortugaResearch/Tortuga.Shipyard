@@ -116,6 +116,7 @@ partial class Column : ModelBase
 	{
 		return PostgreSqlType ?? Type switch
 		{
+			DbType.AnsiString when ((MaxLength ?? 0) == 0) => NpgsqlDbType.Text,
 			DbType.AnsiString => NpgsqlDbType.Varchar,
 			DbType.AnsiStringFixedLength => NpgsqlDbType.Char,
 			DbType.Binary => NpgsqlDbType.Bytea,
@@ -135,6 +136,7 @@ partial class Column : ModelBase
 			//DbType.Object => NpgsqlDbType,
 			//DbType.SByte => System.Data.NpgsqlDbType  ,
 			DbType.Single => NpgsqlDbType.Real,
+			DbType.String when ((MaxLength ?? 0) == 0) => NpgsqlDbType.Text,
 			DbType.String => NpgsqlDbType.Varchar,
 			DbType.StringFixedLength => NpgsqlDbType.Char,
 			DbType.Time => NpgsqlDbType.Time,
@@ -143,6 +145,7 @@ partial class Column : ModelBase
 			//DbType.UInt64 => System.Data.NpgsqlDbType  ,
 			DbType.VarNumeric => NpgsqlDbType.Numeric,
 			DbType.Xml => NpgsqlDbType.Xml,
+			
 
 			_ => throw new NotSupportedException($"Uknown DbType '{Type}'")
 		};
